@@ -1,0 +1,876 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-02-11",
+  "entries": [
+    {
+      "id": "www-laverdaclub-ch-82bbf1",
+      "category": "Laverda-Clubs international",
+      "url": "https://www.laverdaclub.ch/",
+      "status": "OK",
+      "description": "LAVERDA Club Schweiz",
+      "country": "CH",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.81819,
+        "lng": 8.22751,
+        "label": "Switzerland (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.81819,8.22751"
+    },
+    {
+      "id": "laverda750-free-fr-8ad8b1",
+      "category": "Laverda-Clubs international",
+      "url": "http://laverda750.free.fr/web_lav750/index.php",
+      "status": "OK",
+      "description": "Amicale Laverda 750, Frankreich",
+      "country": "FR",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.22764,
+        "lng": 2.21375,
+        "label": "France (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+    },
+    {
+      "id": "www-laverda-gemeinschaft-deutschland-de-d50561",
+      "category": "Laverda-Clubs international",
+      "url": "https://www.laverda-gemeinschaft-deutschland.de/",
+      "status": "OK",
+      "description": "Gemeinsame Homepage der deutschen Clubs und Freunde (DE)",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 51.16569,
+        "lng": 10.45153,
+        "label": "Germany (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+    },
+    {
+      "id": "iloc-co-uk-b644f1",
+      "category": "Laverda-Clubs international",
+      "url": "https://iloc.co.uk/",
+      "status": "OK",
+      "description": "ILOC - International Laverda Owner's Club, England",
+      "country": "GB",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 55.37805,
+        "lng": -3.43597,
+        "label": "United Kingdom (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=55.37805,-3.43597"
+    },
+    {
+      "id": "or600-webspace-rocks-b100d6",
+      "category": "Laverda-Clubs international",
+      "url": "https://or600.webspace.rocks/",
+      "status": "OK",
+      "description": "Laverda Atlas Owners Registry",
+      "country": "unknown",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 20.0,
+        "lng": 0.0,
+        "label": "World (fallback)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=20.00000,0.00000"
+    },
+    {
+      "id": "clublaverdansw-org-au-8d00f6",
+      "category": "Laverda-Clubs international",
+      "url": "https://clublaverdansw.org.au/",
+      "status": "OK",
+      "description": "Laverda Club New South Wales (NSW), Australien",
+      "country": "AU",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": -25.2744,
+        "lng": 133.7751,
+        "label": "Australia (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=-25.27440,133.77510"
+    },
+    {
+      "id": "www-laverda-lcf-fr-7b3a4f",
+      "category": "Laverda-Clubs international",
+      "url": "https://www.laverda-lcf.fr/",
+      "status": "OK",
+      "description": "Laverda Club de France",
+      "country": "FR",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.22764,
+        "lng": 2.21375,
+        "label": "France (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+    },
+    {
+      "id": "www-laverda-club-berlin-de-9d099e",
+      "category": "Laverda-Clubs international",
+      "url": "https://www.laverda-club-berlin.de/",
+      "status": "OK",
+      "description": "Laverda Club, Berlin",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 52.52,
+        "lng": 13.405,
+        "label": "Berlin, DE"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=52.52000,13.40500"
+    },
+    {
+      "id": "www-laverda-dk-406a74",
+      "category": "Laverda-Clubs international",
+      "url": "https://www.laverda.dk/",
+      "status": "OK",
+      "description": "Laverda Club, Dänemark",
+      "country": "DK",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 56.26392,
+        "lng": 9.50179,
+        "label": "Denmark (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=56.26392,9.50179"
+    },
+    {
+      "id": "scuderia-laverdafinland-org-0dc0f7",
+      "category": "Laverda-Clubs international",
+      "url": "https://scuderia.laverdafinland.org/",
+      "status": "OK",
+      "description": "Laverda Club, Finland (Scuderia Laverda Finlanda)",
+      "country": "FI",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 61.92411,
+        "lng": 25.74815,
+        "label": "Finland (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=61.92411,25.74815"
+    },
+    {
+      "id": "www-laverdaclub-eu-2a8a0c",
+      "category": "Laverda-Clubs international",
+      "url": "https://www.laverdaclub.eu/",
+      "status": "OK",
+      "description": "Laverda Club, Holland",
+      "country": "NL",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 52.13263,
+        "lng": 5.29127,
+        "label": "Netherlands (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=52.13263,5.29127"
+    },
+    {
+      "id": "francescaborghesi-wixsite-com-4a2227",
+      "category": "Laverda-Clubs international",
+      "url": "https://francescaborghesi.wixsite.com/laverdaclubitalia",
+      "status": "OK",
+      "description": "Laverda Club Italia",
+      "country": "IT",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 41.87194,
+        "lng": 12.56738,
+        "label": "Italy (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=41.87194,12.56738"
+    },
+    {
+      "id": "laverda-se-090da8",
+      "category": "Laverda-Clubs international",
+      "url": "https://laverda.se/",
+      "status": "OK",
+      "description": "Laverda Club Schweden (Circolo Laverda di Svezia)",
+      "country": "SE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 60.12816,
+        "lng": 18.6435,
+        "label": "Sweden (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=60.12816,18.64350"
+    },
+    {
+      "id": "www-laverdafreunde-at-43657f",
+      "category": "Laverda-Clubs international",
+      "url": "https://www.laverdafreunde.at/",
+      "status": "OK",
+      "description": "Laverda-Freunde Österreich",
+      "country": "AT",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 47.51623,
+        "lng": 14.55007,
+        "label": "Austria (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.51623,14.55007"
+    },
+    {
+      "id": "lco-bike-91f615",
+      "category": "Laverda-Clubs international",
+      "url": "https://lco.bike/",
+      "status": "OK",
+      "description": "Laverda Connection Oberpfalz (DE)",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 51.16569,
+        "lng": 10.45153,
+        "label": "Germany (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+    },
+    {
+      "id": "motoclublaverdabreganze-com-d22a1e",
+      "category": "Laverda-Clubs international",
+      "url": "https://motoclublaverdabreganze.com/",
+      "status": "OK",
+      "description": "Moto Laverda Club Breganze (IT)",
+      "country": "IT",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "club"
+      ],
+      "priority": 1,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 45.7073,
+        "lng": 11.5601,
+        "label": "Breganze, IT"
+      },
+      "locationSource": "approx",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=45.70730,11.56010"
+    },
+    {
+      "id": "museomotolaverda-com-e8bdd8",
+      "category": "Museum",
+      "url": "https://museomotolaverda.com/",
+      "status": "OK",
+      "description": "Laverda Museum Breganze (Seite ist erst im Aufbau)",
+      "country": "IT",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [
+        "museum"
+      ],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 45.7073,
+        "lng": 11.5601,
+        "label": "Breganze, IT"
+      },
+      "locationSource": "approx",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=45.70730,11.56010"
+    },
+    {
+      "id": "alcocknick-wordpress-com-723635",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "https://alcocknick.wordpress.com/",
+      "status": "OK",
+      "description": "Privater Laverda-Blog von Nick Alcock (englisch)",
+      "country": "unknown",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 20.0,
+        "lng": 0.0,
+        "label": "World (fallback)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=20.00000,0.00000"
+    },
+    {
+      "id": "recreation-cadres-chez-alice-fr-c6caa3",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "http://recreation-cadres.chez-alice.fr/",
+      "status": "OK",
+      "description": "Site speziell für LAVERDA Strike 750 ccm (franz./english)",
+      "country": "FR",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.22764,
+        "lng": 2.21375,
+        "label": "France (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+    },
+    {
+      "id": "www-laverda-ca-5245c9",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "http://www.laverda.ca/index.htm",
+      "status": "OK",
+      "description": "Laverda Canada by Columbia Car & Cycle",
+      "country": "CA",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 56.13037,
+        "lng": -106.34677,
+        "label": "Canada (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=56.13037,-106.34677"
+    },
+    {
+      "id": "www-laverdascozia-co-uk-9e63d4",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "http://www.laverdascozia.co.uk/",
+      "status": "OK",
+      "description": "Laverda Scozia; Werkstatt von Keith Nairn, Schottland",
+      "country": "GB",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 55.37805,
+        "lng": -3.43597,
+        "label": "United Kingdom (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=55.37805,-3.43597"
+    },
+    {
+      "id": "www-sport-connection-de-5914ef",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "http://www.sport-connection.de/",
+      "status": "OK",
+      "description": "Werkstatt Sport Connection, Michael Stöcker, Fürth/Odenwald",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 49.65021,
+        "lng": 8.78028,
+        "label": "Fürth (Odenwald), DE"
+      },
+      "locationSource": "approx",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=49.65021,8.78028"
+    },
+    {
+      "id": "carbongastank-com-2b8d2a",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "https://carbongastank.com/",
+      "status": "OK",
+      "description": "Carbonteile für Laverda's",
+      "country": "unknown",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 20.0,
+        "lng": 0.0,
+        "label": "World (fallback)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=20.00000,0.00000"
+    },
+    {
+      "id": "laverda-passion-blogspot-com-d81dfe",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "https://laverda-passion.blogspot.com/",
+      "status": "OK",
+      "description": "Laverda Passion Blog (französisch)",
+      "country": "FR",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.22764,
+        "lng": 2.21375,
+        "label": "France (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+    },
+    {
+      "id": "www-laverdaclub-ch-710938",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "https://www.laverdaclub.ch/650/laverda/index.html",
+      "status": "OK",
+      "description": "informative HP von Markus für die 650-er/668-er Zané-Modelle von Laverda",
+      "country": "CH",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.81819,
+        "lng": 8.22751,
+        "label": "Switzerland (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.81819,8.22751"
+    },
+    {
+      "id": "www-motalia-co-uk-8838e2",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "https://www.motalia.co.uk/",
+      "status": "OK",
+      "description": "Motalia Ltd, Laverda-online Shop in Norwich, UK",
+      "country": "GB",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 52.63089,
+        "lng": 1.29736,
+        "label": "Norwich, GB"
+      },
+      "locationSource": "approx",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=52.63089,1.29736"
+    },
+    {
+      "id": "www-motocorsa-es-f48362",
+      "category": "Laverda allgemein & private / gewerbliche Webseiten",
+      "url": "https://www.motocorsa.es/",
+      "status": "OK",
+      "description": "Laverda Werkstatt in Alfarràs, Spanien",
+      "country": "ES",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 41.817,
+        "lng": 0.569,
+        "label": "Alfarràs, ES"
+      },
+      "locationSource": "approx",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=41.81700,0.56900"
+    },
+    {
+      "id": "www-laverdacorse-it-fcee7f",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverdacorse.it",
+      "status": "OK",
+      "description": "Homepage von Piero Laverda, wird von seinem ältesten Sohn Giovanni betreut",
+      "country": "IT",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 41.87194,
+        "lng": 12.56738,
+        "label": "Italy (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=41.87194,12.56738"
+    },
+    {
+      "id": "www-laverda-hrm-ch-27a215",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverda-hrm.ch",
+      "status": "OK",
+      "description": "LAVERDA Classic Homepage von Hans Ruedi Möri",
+      "country": "CH",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.81819,
+        "lng": 8.22751,
+        "label": "Switzerland (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.81819,8.22751"
+    },
+    {
+      "id": "www-laverdamania-net-f806fe",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverdamania.net",
+      "status": "OK",
+      "description": "Laverda Homepage aus Frankreich (französisch)",
+      "country": "FR",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 46.22764,
+        "lng": 2.21375,
+        "label": "France (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+    },
+    {
+      "id": "www-laverda-paradies-de-8e5d58",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverda-paradies.de",
+      "status": "OK",
+      "description": "Laverda Paradies Andy Wagner - Homepage Laverda Racing Teams, Konstanz",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 47.66667,
+        "lng": 9.18333,
+        "label": "Konstanz, DE"
+      },
+      "locationSource": "approx",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.66667,9.18333"
+    },
+    {
+      "id": "www-laverda-register-de-fc4c20",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverda-register.de",
+      "status": "OK",
+      "description": "Deutsches Laverda-Register von Jürgen Wortmann",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 51.16569,
+        "lng": 10.45153,
+        "label": "Germany (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+    },
+    {
+      "id": "www-laverda-register-de-5a60aa",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverda-register.de/forum",
+      "status": "NOP",
+      "description": "Ein Laverda Forum  => Seite innerhalb der Webseite \"Laverda-Register\"",
+      "country": "DE",
+      "visibility": "hidden",
+      "verified": false,
+      "linkType": "forum",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 51.16569,
+        "lng": 10.45153,
+        "label": "Germany (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+    },
+    {
+      "id": "www-laverda-team-werndl-de-affc02",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverda-team-werndl.de",
+      "status": "OK",
+      "description": "Dies ist die HP von Willi Werndl und seinem Team",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 51.16569,
+        "lng": 10.45153,
+        "label": "Germany (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+    },
+    {
+      "id": "www-laverdino-de-59cb7c",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.laverdino.de",
+      "status": "OK",
+      "description": "Private Laverda HP von Sigi aus Bayern (in deutsch und englisch)",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 51.16569,
+        "lng": 10.45153,
+        "label": "Germany (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+    },
+    {
+      "id": "www-motostoricheitaliane-com-d84480",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.motostoricheitaliane.com",
+      "status": "OK",
+      "description": "Setti Marino - Auspuffendtöpfe für Laverda's",
+      "country": "IT",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 41.87194,
+        "lng": 12.56738,
+        "label": "Italy (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=41.87194,12.56738"
+    },
+    {
+      "id": "www-octeam-de-77a328",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.octeam.de",
+      "status": "OK",
+      "description": "Orange Cycle Team: Ersatzteile, Service, Umbauten, Tuning, exklusiv Laverda",
+      "country": "DE",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "approx",
+        "lat": 50.67611,
+        "lng": 6.86111,
+        "label": "Dom-Esch (Euskirchen), DE"
+      },
+      "locationSource": "approx",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=50.67611,6.86111"
+    },
+    {
+      "id": "www-vanderschalk-com-7a4178",
+      "category": "projektorange.blogspot.com",
+      "url": "https://www.vanderschalk.com/sfc",
+      "status": "OK",
+      "description": "Homepage von Marnix van der Schalk rund um die SFC's (SFC Registry)",
+      "country": "NL",
+      "visibility": "public",
+      "verified": true,
+      "linkType": "website",
+      "tags": [],
+      "priority": 3,
+      "lastCheckedAt": "2026-02-09",
+      "location": {
+        "mode": "country-centroid",
+        "lat": 52.13263,
+        "lng": 5.29127,
+        "label": "Netherlands (centroid)"
+      },
+      "locationSource": "centroid",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=52.13263,5.29127"
+    }
+  ]
+}
