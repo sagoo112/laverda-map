@@ -1,329 +1,270 @@
-import React, { useMemo, useState } from "react";
-import { View, StyleSheet, Platform, Modal, Pressable, Text, FlatList } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Text } from "react-native";
+import MapView, { MapPressEvent, Marker, MarkerPressEvent } from "react-native-maps";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PlacesFile, PlaceType } from "../types/entry";
-import { normalizeForMap, MapItem } from "../utils/normalizeEntries";
-import { FiltersPanel } from "../components/FiltersPanel";
+import CategoryFilter from "../components/CategoryFilter";
 import PlaceBottomSheet from "../components/PlaceBottomSheet";
-
-import placesRaw from "../data/places.json";
-
-const file = placesRaw as PlacesFile;
-
-const initialRegion: Region = {
-  latitude: 20,
-  longitude: 0,
-  latitudeDelta: 120,
-  longitudeDelta: 120
-};
-
-function displayTitle(e: MapItem) {
-  const s = (e.description?.trim() ?? "");
-  return s.length > 0 ? s : e.url;
-}
-
-// Optional: wenn du extrem lange Titel hast, hier minimal kürzen (ohne Ellipsis im UI)
-// function displayTitle(e: MapItem) {
-//   const s = (e.description?.trim() ?? "");
-//   const raw = s.length > 0 ? s : e.url;
-//   return raw.replace(/^https?:\/\//, "").replace(/^www\./, "");
-// }
-
-function typeColor(t: PlaceType, mode: string) {
-  if (mode === "country-centroid") return "#8a8a8a";
-  switch (t) {
-    case "club": return "#111";
-    case "museum": return "#a33";
-    case "service": return "#0a66ff";
-    case "private": return "#0b8a5a";
-    default: return "#666";
-  }
-}
-
-function MarkerView(props: { title: string; color: string; compact?: boolean }) {
-  return (
-    <View style={styles.markerWrap} pointerEvents="none">
-      <View style={[styles.markerLabel, props.compact && styles.markerLabelCompact]}>
-        {/* WICHTIG: kein numberOfLines -> kein Ellipsis; dafür maxWidth + wrapping */}
-        <Text style={styles.markerLabelText}>{props.title}</Text>
-      </View>
-
-      <View style={[styles.pinCircle, { borderColor: props.color }]} />
-      <View style={[styles.pinCircleInner, { backgroundColor: props.color }]} />
-      <View style={[styles.pinStem, { backgroundColor: props.color }]} />
-      <View style={[styles.pinTip, { borderTopColor: props.color }]} />
-    </View>
-  );
-}
+import { placesForMap } from "../utils/placesData";
+import { MapItem } from "../utils/normalizeEntries";
+import { getCategoryMeta } from "../utils/placeCategories";
 
 export default function MapScreen() {
-  const items = useMemo(() => normalizeForMap(file.entries), []);
+	const [selectedCategory, setSelectedCategory] = useState("all");
+	const [searchQuery, setSearchQuery] = useState("");
+	const [selectedPlace, setSelectedPlace] = useState<MapItem | null>(null);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const insets = useSafeAreaInsets();
+	const mapRef = useRef<MapView>(null);
 
-  const [filtersOpen, setFiltersOpen] = useState(false);
+	const PLACES: MapItem[] = useMemo(() => placesForMap.filter((p) => p.type !== "blog"), []);
 
-  const [country, setCountry] = useState("all");
-  const [type, setType] = useState<PlaceType | "all">("all");
-  const [tag, setTag] = useState("all");
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
+	const categories = useMemo(() => {
+		const unique = new Set<string>();
+		PLACES.forEach((p) => {
+			const meta = getCategoryMeta(p);
+			unique.add(meta.key);
+		});
+		return ["all", ...Array.from(unique)];
+	}, [PLACES]);
+	
+	const filteredPlaces = useMemo(() => {
+		let next = selectedCategory === "all" ? PLACES : PLACES.filter((p) => getCategoryMeta(p).key === selectedCategory);
+		const query = searchQuery.trim().toLowerCase();
+		if (!query) return next;
+		return next.filter((p) => {
+			const hay = [
+				p.name,
+				p.description,
+				p.address,
+				p.country,
+				p._country,
+				p.tags?.join(" "),
+				p.category
+			]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
+			return hay.includes(query);
+		});
+	}, [PLACES, selectedCategory, searchQuery]);
 
-  // centroid-group selection modal
-  const [centroidListOpen, setCentroidListOpen] = useState(false);
-  const [centroidItems, setCentroidItems] = useState<MapItem[]>([]);
-  const [centroidTitle, setCentroidTitle] = useState("");
+	const handleMapPress = (_event: MapPressEvent) => {
+		setSelectedPlace(null);
+	};
 
-  // bottom sheet
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+	const handleMarkerPress = (place: MapItem) => (event: MarkerPressEvent) => {
+		if (event && typeof event.stopPropagation === "function") {
+			event.stopPropagation();
+		}
+		setSelectedPlace(place);
+	};
 
-  const selectedItem = useMemo(() => {
-    if (!selectedId) return null;
-    return items.find((x) => x.id === selectedId) ?? null;
-  }, [items, selectedId]);
+	const suggestions = useMemo(() => {
+		const query = searchQuery.trim().toLowerCase();
+		if (!query) return [];
+		return PLACES.filter((p) => {
+			const hay = [p.name, p.description, p.address, p.country].filter(Boolean).join(" ").toLowerCase();
+			return hay.includes(query);
+		}).slice(0, 5);
+	}, [PLACES, searchQuery]);
 
-  const countries = useMemo(() => {
-    return Array.from(new Set(items.map((i) => i._country)))
-      .filter((c) => c !== "unknown")
-      .sort();
-  }, [items]);
+	const focusPlace = useCallback((place: MapItem) => {
+		setSelectedPlace(place);
+		setSearchQuery(place.name ?? place.description ?? "");
+		setShowSuggestions(false);
 
-  const tags = useMemo(() => {
-    const s = new Set<string>();
-    items.forEach((i) => (i.tags ?? []).forEach((t) => s.add(t)));
-    return Array.from(s).sort();
-  }, [items]);
+		requestAnimationFrame(() => {
+			mapRef.current?.animateToRegion(
+				{
+					latitude: place._lat,
+					longitude: place._lng,
+					latitudeDelta: 0.5,
+					longitudeDelta: 0.5
+				},
+				500
+			);
+		});
+	}, []);
 
-  const filtered = useMemo(() => {
-    return items.filter((i) => {
-      if (verifiedOnly && !i.verified) return false;
-      if (country !== "all" && i._country !== country) return false;
-      if (type !== "all" && i._type !== type) return false;
-      if (tag !== "all" && !(i.tags ?? []).includes(tag)) return false;
-      return true;
-    });
-  }, [items, verifiedOnly, country, type, tag]);
+	const handleSuggestionSelect = (place: MapItem) => {
+		focusPlace(place);
+	};
 
-  const { exactMarkers, centroidGroups } = useMemo(() => {
-    const exact: MapItem[] = [];
-    const groups = new Map<string, { key: string; lat: number; lng: number; country: string; items: MapItem[] }>();
-
-    for (const e of filtered) {
-      if (e._mode === "country-centroid") {
-        const k = `${e._country}:${e._lat.toFixed(5)},${e._lng.toFixed(5)}`;
-        const g = groups.get(k) ?? { key: k, lat: e._lat, lng: e._lng, country: e._country, items: [] };
-        g.items.push(e);
-        groups.set(k, g);
-      } else {
-        exact.push(e);
-      }
-    }
-    return { exactMarkers: exact, centroidGroups: Array.from(groups.values()) };
-  }, [filtered]);
-
-  function openCentroidGroup(group: { country: string; items: MapItem[] }) {
-    const sorted = [...group.items].sort((a, b) => displayTitle(a).localeCompare(displayTitle(b)));
-    setCentroidItems(sorted);
-    setCentroidTitle(`${group.country} (${group.items.length})`);
-    setCentroidListOpen(true);
-  }
-
-  function openSheet(placeId: string) {
-    setSelectedId(placeId);
-    setSheetOpen(true);
-  }
-
-  return (
-    <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={initialRegion}
-        provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
-      >
-        {exactMarkers.map((e) => {
-          const title = displayTitle(e);
-          const color = typeColor(e._type, e._mode);
-          return (
-            <Marker
-              key={e.id}
-              coordinate={{ latitude: e._lat, longitude: e._lng }}
-              anchor={{ x: 0.5, y: 1 }}              // wichtig: label geht nach oben
-              tracksViewChanges={false}               // performance + stabileres rendering
-              onPress={() => openSheet(e.id)}
-            >
-              <MarkerView title={title} color={color} />
-            </Marker>
-          );
-        })}
-
-        {centroidGroups.map((g) => {
-          const title = g.items.length === 1 ? displayTitle(g.items[0]) : `${g.country} (${g.items.length})`;
-          return (
-            <Marker
-              key={g.key}
-              coordinate={{ latitude: g.lat, longitude: g.lng }}
-              anchor={{ x: 0.5, y: 1 }}
-              tracksViewChanges={false}
-              onPress={() => {
-                if (g.items.length === 1) openSheet(g.items[0].id);
-                else openCentroidGroup({ country: g.country, items: g.items });
-              }}
-            >
-              <MarkerView title={title} color={"#8a8a8a"} compact={g.items.length > 1} />
-            </Marker>
-          );
-        })}
-      </MapView>
-
-      {/* Filter button */}
-      <Pressable style={styles.filterButton} onPress={() => setFiltersOpen((x) => !x)}>
-        <Text style={styles.filterButtonText}>Filter</Text>
-      </Pressable>
-
-      {/* Filters modal */}
-      <Modal visible={filtersOpen} transparent animationType="fade" onRequestClose={() => setFiltersOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setFiltersOpen(false)} />
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>Filters</Text>
-          <FiltersPanel
-            countries={countries}
-            tags={tags}
-            country={country}
-            type={type}
-            tag={tag}
-            verifiedOnly={verifiedOnly}
-            setCountry={setCountry}
-            setType={setType}
-            setTag={setTag}
-            setVerifiedOnly={setVerifiedOnly}
-          />
-        </View>
-      </Modal>
-
-      {/* Centroid picker modal */}
-      <Modal visible={centroidListOpen} transparent animationType="fade" onRequestClose={() => setCentroidListOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setCentroidListOpen(false)} />
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>{centroidTitle}</Text>
-
-          <FlatList
-            data={centroidItems}
-            keyExtractor={(x) => x.id}
-            ItemSeparatorComponent={() => <View style={styles.sep} />}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.listRow}
-                onPress={() => {
-                  setCentroidListOpen(false);
-                  openSheet(item.id);
-                }}
-              >
-                <Text style={styles.listTitle}>{displayTitle(item)}</Text>
-                <Text style={styles.listMeta}>
-                  {item._type} • {item._country}
-                </Text>
-              </Pressable>
-            )}
-          />
-        </View>
-      </Modal>
-
-      {/* Bottom sheet */}
-      <PlaceBottomSheet visible={sheetOpen} item={selectedItem} onClose={() => setSheetOpen(false)} />
-    </View>
-  );
+	const handleSubmitEditing = () => {
+		if (suggestions.length) {
+			focusPlace(suggestions[0]);
+		}
+	};
+	
+	return (
+			<View style={styles.container}>
+				<MapView
+				ref={mapRef}
+				style={styles.map}
+			initialRegion={{
+				latitude: 47.55,
+				longitude: 9.65,
+				latitudeDelta: 1.5,
+				longitudeDelta: 1.5,
+			}}
+			onPress={handleMapPress}
+			>
+			{filteredPlaces.map((place: MapItem, index: number) => {
+				const lat = Number(place._lat);
+				const lng = Number(place._lng);
+				const key = place.id ? `${place.id}-${index}` : `${lat}-${lng}-${index}`;
+				const categoryMeta = getCategoryMeta(place);
+				
+				return (
+						<Marker
+						key={key}
+						coordinate={{ latitude: lat, longitude: lng }}
+						title={place.name ?? place.description ?? "Place"}
+						description={place.address ?? categoryMeta.label}
+						onPress={handleMarkerPress(place)}
+						tracksViewChanges={false}
+						anchor={{ x: 0.5, y: 1 }}
+						>
+						<View style={styles.markerWrapper}>
+						<View style={[styles.markerBubble, { backgroundColor: categoryMeta.color }]}>
+						<MaterialCommunityIcons name={categoryMeta.icon as any} size={18} color="#fff" />
+						</View>
+						<View style={[styles.markerPointer, { borderTopColor: categoryMeta.color }]} />
+						</View>
+						</Marker>
+						);
+			})}
+			</MapView>
+			
+			<View pointerEvents="box-none" style={[styles.controls, { top: Math.max(20, insets.top + 8) }]}>
+				<View style={styles.searchBar}>
+					<MaterialCommunityIcons name="magnify" size={18} color="#475569" />
+					<TextInput
+						style={styles.searchInput}
+						placeholder="Search places..."
+						placeholderTextColor="#94a3b8"
+						value={searchQuery}
+						onChangeText={(text) => {
+							setSearchQuery(text);
+							setShowSuggestions(true);
+						}}
+						onFocus={() => setShowSuggestions(true)}
+						onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+						onSubmitEditing={handleSubmitEditing}
+						autoCorrect={false}
+						autoCapitalize="none"
+						returnKeyType="search"
+						blurOnSubmit={false}
+					/>
+					{searchQuery ? (
+						<Pressable onPress={() => setSearchQuery("")}>
+							<MaterialCommunityIcons name="close-circle" size={18} color="#94a3b8" />
+						</Pressable>
+					) : null}
+				</View>
+				<CategoryFilter
+					categories={categories}
+					selected={selectedCategory}
+					onSelect={setSelectedCategory}
+				/>
+				{showSuggestions && suggestions.length ? (
+					<View style={styles.suggestions}>
+						<FlatList
+							keyboardShouldPersistTaps="handled"
+							data={suggestions}
+							keyExtractor={(item) => item.id}
+							renderItem={({ item }) => (
+								<Pressable style={styles.suggestionRow} onPress={() => handleSuggestionSelect(item)}>
+									<Text style={styles.suggestionTitle}>{item.name ?? item.description ?? "Place"}</Text>
+									<Text style={styles.suggestionMeta} numberOfLines={1}>
+										{item._country} • {getCategoryMeta(item).label}
+									</Text>
+								</Pressable>
+							)}
+						/>
+					</View>
+				) : null}
+			</View>
+			
+			<PlaceBottomSheet place={selectedPlace} />
+			</View>
+			);
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  map: { flex: 1 },
-
-  filterButton: {
-    position: "absolute",
-    right: 14,
-    top: 14,
-    backgroundColor: "#111",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4
-  },
-  filterButtonText: { color: "white", fontWeight: "900", fontSize: 12 },
-
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
-  panel: {
-    position: "absolute",
-    top: 60,
-    left: 12,
-    right: 12,
-    maxHeight: "78%",
-    backgroundColor: "white",
-    borderRadius: 18,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 6
-  },
-  panelTitle: { fontSize: 14, fontWeight: "900", marginBottom: 10 },
-
-  sep: { height: 1, backgroundColor: "#eee" },
-  listRow: { paddingVertical: 10 },
-  listTitle: { fontWeight: "900", fontSize: 14, lineHeight: 18 },
-  listMeta: { color: "#666", marginTop: 2, fontSize: 12 },
-
-  // Marker (key: overflow visible + wrapping)
-  markerWrap: {
-    alignItems: "center",
-    overflow: "visible" // critical
-  },
-  markerLabel: {
-    overflow: "visible",
-    backgroundColor: "rgba(255,255,255,0.97)",
-    borderRadius: 14,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 6,
-
-    // bigger, so long titles wrap instead of being cut
-    maxWidth: 260,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3
-  },
-  markerLabelCompact: { maxWidth: 220 },
-  markerLabelText: {
-    fontSize: 12,
-    fontWeight: "900",
-    lineHeight: 16,
-
-    // allow wrapping
-    flexShrink: 1
-  },
-
-  pinCircle: { width: 18, height: 18, borderRadius: 999, borderWidth: 2, backgroundColor: "white" },
-  pinCircleInner: { position: "absolute", top: 4, width: 10, height: 10, borderRadius: 999 },
-  pinStem: { width: 3, height: 11, marginTop: -1, borderRadius: 2 },
-  pinTip: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 10,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: "#111",
-    marginTop: -1
-  }
+	container: { flex: 1 },
+	map: { flex: 1 },
+	controls: {
+		position: "absolute",
+		left: 16,
+		right: 16,
+		gap: 12,
+	},
+	searchBar: {
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#fff",
+		borderRadius: 999,
+		paddingHorizontal: 16,
+		paddingVertical: 10,
+		borderWidth: 1,
+		borderColor: "#e2e8f0",
+		shadowColor: "#000",
+		shadowOpacity: 0.08,
+		shadowRadius: 6,
+		shadowOffset: { width: 0, height: 2 },
+		elevation: 4,
+	},
+	searchInput: {
+		flex: 1,
+		marginLeft: 10,
+		color: "#0f172a",
+	},
+	suggestions: {
+		marginTop: 4,
+		backgroundColor: "#fff",
+		borderRadius: 16,
+		borderWidth: 1,
+		borderColor: "#e2e8f0",
+		maxHeight: 220,
+		shadowColor: "#000",
+		shadowOpacity: 0.08,
+		shadowRadius: 8,
+		shadowOffset: { width: 0, height: 4 },
+		elevation: 6
+	},
+	suggestionRow: {
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: "#f1f5f9"
+	},
+	suggestionTitle: { fontSize: 14, fontWeight: "600", color: "#0f172a" },
+	suggestionMeta: { fontSize: 12, color: "#64748b", marginTop: 2 },
+	markerWrapper: {
+		alignItems: "center",
+	},
+	markerBubble: {
+		padding: 6,
+		borderRadius: 18,
+		borderWidth: 2,
+		borderColor: "#fff",
+		shadowColor: "#000",
+		shadowOpacity: 0.25,
+		shadowOffset: { width: 0, height: 3 },
+		shadowRadius: 4,
+		elevation: 6,
+	},
+	markerPointer: {
+		width: 0,
+		height: 0,
+		borderLeftWidth: 6,
+		borderRightWidth: 6,
+		borderTopWidth: 8,
+		borderLeftColor: "transparent",
+		borderRightColor: "transparent",
+		marginTop: -1,
+	}
 });

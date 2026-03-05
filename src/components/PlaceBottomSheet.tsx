@@ -1,205 +1,157 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  Dimensions,
-  Linking,
-  PanResponder,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Modal, Pressable, Linking, ScrollView } from "react-native";
+import { WebView } from "react-native-webview";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MapItem } from "../utils/normalizeEntries";
-import { openNavigation, openInNativeMaps } from "../utils/openMaps";
+import { getCategoryMeta } from "../utils/placeCategories";
 
 type Props = {
-  visible: boolean;
-  item: MapItem | null;
-  onClose: () => void;
+	place: MapItem | null;
 };
 
-const SCREEN_H = Dimensions.get("window").height;
+export default function PlaceBottomSheet({ place }: Props) {
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	const insets = useSafeAreaInsets();
+	
+	if (!place) return null;
 
-export default function PlaceBottomSheet({ visible, item, onClose }: Props) {
-  const sheetH = Math.min(Math.round(SCREEN_H * 0.45), 520);
-
-  // translateY: 0 = open, sheetH = closed
-  const baseY = useRef(new Animated.Value(sheetH)).current;
-  const dragY = useRef(new Animated.Value(0)).current;
-
-  const translateY = Animated.add(baseY, dragY).interpolate({
-    inputRange: [0, sheetH],
-    outputRange: [0, sheetH],
-    extrapolate: "clamp"
-  });
-
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    if (visible) {
-      setIsMounted(true);
-      Animated.timing(baseY, {
-        toValue: 0,
-        duration: 220,
-        useNativeDriver: true
-      }).start();
-    } else {
-      Animated.timing(baseY, {
-        toValue: sheetH,
-        duration: 180,
-        useNativeDriver: true
-      }).start(({ finished }) => {
-        if (finished) setIsMounted(false);
-      });
-    }
-  }, [visible, sheetH, baseY]);
-
-  const pan = useMemo(() => {
-    return PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 6,
-      onPanResponderMove: (_, g) => {
-        dragY.setValue(Math.max(0, g.dy));
-      },
-      onPanResponderRelease: (_, g) => {
-        const shouldClose = g.dy > sheetH * 0.25 || g.vy > 1.1;
-
-        if (shouldClose) {
-          dragY.setValue(0);
-          onClose();
-          return;
-        }
-
-        Animated.spring(dragY, {
-          toValue: 0,
-          useNativeDriver: true
-        }).start();
-      }
-    });
-  }, [dragY, onClose, sheetH]);
-
-  if (!isMounted) return null;
-
-  const title = item ? (item.description?.trim() || item.url) : "";
-  const subtitle = item
-    ? `${item._type} • ${item._country} • ${item.location?.mode ?? "country-centroid"}`
-    : "";
-
-  const isCentroid = (item?.location?.mode ?? "country-centroid") === "country-centroid";
-
-  return (
-    <Animated.View
-      style={[styles.wrap, { height: sheetH, transform: [{ translateY }] }]}
-      pointerEvents="auto"
-    >
-      <View {...pan.panHandlers} style={styles.grabberArea}>
-        <View style={styles.grabber} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title} numberOfLines={2}>{title}</Text>
-        <Text style={styles.meta}>{subtitle}</Text>
-
-        {item?.tags?.length ? <Text style={styles.block}>Tags: {item.tags.join(", ")}</Text> : null}
-        {typeof item?.verified === "boolean" ? <Text style={styles.block}>Verified: {String(item.verified)}</Text> : null}
-        {item?.lastCheckedAt ? <Text style={styles.block}>Last checked: {item.lastCheckedAt}</Text> : null}
-
-        {item ? (
-          <Text style={styles.block}>
-            Coordinates: {item._lat.toFixed(5)}, {item._lng.toFixed(5)}
-          </Text>
-        ) : null}
-
-        {isCentroid ? (
-          <Text style={styles.hint}>
-            This is a country-centroid marker (no precise address). Navigation is disabled.
-          </Text>
-        ) : null}
-
-        <View style={styles.buttons}>
-          {item?.url ? (
-            <View style={styles.btnOutline} onTouchEnd={() => Linking.openURL(item.url)}>
-              <Text style={styles.btnOutlineText}>Open Website</Text>
-            </View>
-          ) : null}
-
-          {!isCentroid && item ? (
-            <View
-              style={styles.btn}
-              onTouchEnd={() => openNavigation({ navigationUrl: item._navigationUrl, lat: item._lat, lng: item._lng })}
-            >
-              <Text style={styles.btnText}>Navigate</Text>
-            </View>
-          ) : null}
-
-          {!isCentroid && item ? (
-            <View
-              style={styles.btnOutline}
-              onTouchEnd={() => openInNativeMaps({ lat: item._lat, lng: item._lng, label: title })}
-            >
-              <Text style={styles.btnOutlineText}>Open in Maps</Text>
-            </View>
-          ) : null}
-        </View>
-      </ScrollView>
-    </Animated.View>
-  );
+	const categoryMeta = getCategoryMeta(place);
+	
+	const openNavigation = () => {
+		if (!place) return;
+		
+		const url = place._navigationUrl ?? `https://www.google.com/maps/dir/?api=1&destination=${place._lat},${place._lng}`;
+		Linking.openURL(url);
+	};
+	
+	return (
+			<>
+			<View pointerEvents="box-none" style={styles.host}>
+			<View pointerEvents="none" style={styles.overlay} />
+			<View pointerEvents="box-none" style={[styles.sheetContainer, { paddingBottom: insets.bottom + 90 }]}>
+			<View style={styles.sheet}>
+			<ScrollView>
+			<Text style={styles.title}>{place.name}</Text>
+			
+				<View style={[styles.categoryPill, { borderColor: categoryMeta.color, backgroundColor: `${categoryMeta.color}18` }]}>
+				<MaterialCommunityIcons name={categoryMeta.icon as any} size={16} color={categoryMeta.color} />
+				<Text style={[styles.categoryText, { color: categoryMeta.color }]}>
+				{categoryMeta.label}
+				</Text>
+				</View>
+			
+			{place.address && (
+							   <Text style={styles.meta}>Address: {place.address}</Text>
+							   )}
+			
+			{place.description && (
+								   <Text style={styles.description}>{place.description}</Text>
+								   )}
+			
+			{place.url && (
+						   <>
+						   <Pressable
+						   style={styles.button}
+						   onPress={() => setPreviewUrl(place.url)}
+						   >
+						   <Text style={styles.buttonText}>Preview Website</Text>
+						   </Pressable>
+						   
+						   <Pressable
+						   style={styles.button}
+						   onPress={() => Linking.openURL(place.url)}
+						   >
+						   <Text style={styles.buttonText}>Open Website</Text>
+						   </Pressable>
+						   </>
+						   )}
+			
+				{Number.isFinite(place._lat) && Number.isFinite(place._lng) && (
+													   <Pressable style={styles.button} onPress={openNavigation}>
+													   <Text style={styles.buttonText}>Navigate</Text>
+													   </Pressable>
+													   )}
+			</ScrollView>
+			</View>
+			</View>
+			</View>
+			
+			{previewUrl && (
+							<Modal visible animationType="slide" onRequestClose={() => setPreviewUrl(null)}>
+							<View style={{ flex: 1 }}>
+							<WebView source={{ uri: previewUrl }} />
+							<Pressable style={styles.previewCloseButton} onPress={() => setPreviewUrl(null)}>
+							<Text style={styles.previewCloseText}>Back</Text>
+							</Pressable>
+							</View>
+							</Modal>
+							)}
+			</>
+			);
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "white",
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -3 },
-    elevation: 8
-  },
-  grabberArea: {
-    paddingTop: 10,
-    paddingBottom: 6,
-    alignItems: "center"
-  },
-  grabber: {
-    width: 44,
-    height: 5,
-    borderRadius: 99,
-    backgroundColor: "#cfcfcf"
-  },
-  content: {
-    paddingHorizontal: 14,
-    paddingBottom: 18,
-    gap: 8
-  },
-  title: { fontSize: 18, fontWeight: "900" },
-  meta: { color: "#666", fontSize: 12 },
-  block: { fontSize: 13, lineHeight: 18 },
-  hint: { fontSize: 12, color: "#666", lineHeight: 16 },
-
-  buttons: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
-
-  // using View + onTouchEnd to avoid press issues inside some animated contexts
-  btn: {
-    backgroundColor: "#111",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12
-  },
-  btnText: { color: "white", fontWeight: "900" },
-
-  btnOutline: {
-    borderWidth: 1,
-    borderColor: "#111",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12
-  },
-  btnOutlineText: { color: "#111", fontWeight: "900" }
+	host: {
+		...StyleSheet.absoluteFillObject,
+	},
+	overlay: {
+		...StyleSheet.absoluteFillObject,
+		backgroundColor: "rgba(0,0,0,0.3)",
+	},
+	sheetContainer: {
+		flex: 1,
+		justifyContent: "flex-end",
+	},
+	sheet: {
+		backgroundColor: "#fff",
+		padding: 20,
+		maxHeight: "70%",
+		borderTopLeftRadius: 20,
+		borderTopRightRadius: 20,
+	},
+	title: {
+		fontSize: 20,
+		fontWeight: "bold",
+		marginBottom: 10,
+	},
+	categoryPill: {
+		alignSelf: "flex-start",
+		paddingHorizontal: 12,
+		paddingVertical: 4,
+		borderRadius: 999,
+		borderWidth: 1,
+		marginBottom: 8,
+	},
+	categoryText: {
+		fontSize: 13,
+		fontWeight: "600",
+	},
+	description: {
+		fontSize: 14,
+		marginVertical: 10,
+	},
+	meta: {
+		fontSize: 14,
+		marginBottom: 6,
+		color: "#4b5563",
+	},
+	button: {
+		backgroundColor: "#222",
+		padding: 12,
+		borderRadius: 8,
+		marginVertical: 6,
+	},
+	buttonText: {
+		color: "#fff",
+		textAlign: "center",
+	},
+	previewCloseButton: {
+		padding: 14,
+		backgroundColor: "#111",
+	},
+	previewCloseText: {
+		color: "#fff",
+		textAlign: "center",
+	}
 });

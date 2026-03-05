@@ -3,16 +3,12 @@ import { View, Text, StyleSheet, Pressable, Linking, ScrollView } from "react-na
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 
-import { PlacesFile } from "../types/entry";
-import { normalizeForMap } from "../utils/normalizeEntries";
+import { placesForMap } from "../utils/placesData";
 import { openNavigation, openInNativeMaps } from "../utils/openMaps";
-
-import placesRaw from "../data/places.json";
 
 type Props = NativeStackScreenProps<RootStackParamList, "PlaceDetails">;
 
-const file = placesRaw as PlacesFile;
-const items = normalizeForMap(file.entries);
+const items = placesForMap;
 
 export default function PlaceDetailsScreen({ route }: Props) {
   const entry = useMemo(() => items.find((x) => x.id === route.params.placeId), [route.params.placeId]);
