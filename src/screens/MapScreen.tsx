@@ -104,10 +104,10 @@ export default function MapScreen() {
 				ref={mapRef}
 				style={styles.map}
 			initialRegion={{
-				latitude: 48.0,
-				longitude: 5.0,
-				latitudeDelta: 22,
-				longitudeDelta: 28,
+				latitude: 46.8,
+				longitude: 8.2,
+				latitudeDelta: 4,
+				longitudeDelta: 5,
 			}}
 			onPress={handleMapPress}
 			>
