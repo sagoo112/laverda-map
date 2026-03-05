@@ -18,7 +18,17 @@ export type Location = {
 };
 
 /** Normalized, app-facing type used for filtering. */
-export type PlaceType = "club" | "private" | "museum" | "service" | "other";
+export type PlaceType =
+  | "club"
+  | "private"
+  | "museum"
+  | "service"
+  | "blog"
+  | "forum"
+  | "registry"
+  | "shop"
+  | "event"
+  | "other";
 
 /** Preferred ISO-3166-1 alpha-2 (e.g. "CH"). Use "unknown" if missing. */
 export type CountryIso2 = string;
@@ -40,6 +50,8 @@ export type Entry = {
 
   /** Legacy category string from source file (optional) */
   category?: string;
+  name?: string;
+  address?: string;
 
   url: string;
   status?: string;

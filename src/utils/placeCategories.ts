@@ -1,8 +1,11 @@
+import { ImageSourcePropType } from "react-native";
 import { Entry } from "../types/entry";
 import { MapItem } from "./normalizeEntries";
 
+const CLUB_LOGO = require("../../assets/laverda-logo.png");
+
 const CATEGORY_STYLES = {
-  club: { label: "Club", color: "#f97316", icon: "motorbike" },
+  club: { label: "Club", color: "#f97316", icon: "motorbike", iconImage: CLUB_LOGO },
   service: { label: "Workshop", color: "#2563eb", icon: "wrench-cog" },
   museum: { label: "Museum", color: "#a855f7", icon: "bank" },
   private: { label: "Private Collection", color: "#0ea5e9", icon: "home-modern" },
@@ -21,6 +24,7 @@ export type CategoryMeta = {
   label: string;
   color: string;
   icon: string;
+  iconImage?: ImageSourcePropType;
 };
 
 const CATEGORY_ALIAS: Record<string, CategoryKey> = {

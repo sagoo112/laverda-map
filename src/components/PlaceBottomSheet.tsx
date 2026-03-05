@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Modal, Pressable, Linking, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Modal, Pressable, Linking, ScrollView, Image } from "react-native";
 import { WebView } from "react-native-webview";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,7 +35,23 @@ export default function PlaceBottomSheet({ place }: Props) {
 			<Text style={styles.title}>{place.name}</Text>
 			
 				<View style={[styles.categoryPill, { borderColor: categoryMeta.color, backgroundColor: `${categoryMeta.color}18` }]}>
+				{categoryMeta.key === "club" && categoryMeta.iconImage ? (
+				<View
+				style={{
+					width: 18,
+					height: 18,
+					borderRadius: 9,
+					backgroundColor: "#fff",
+					alignItems: "center",
+					justifyContent: "center",
+					marginRight: 6
+				}}
+				>
+					<Image source={categoryMeta.iconImage} style={{ width: 16, height: 16, borderRadius: 8 }} />
+				</View>
+				) : (
 				<MaterialCommunityIcons name={categoryMeta.icon as any} size={16} color={categoryMeta.color} />
+				)}
 				<Text style={[styles.categoryText, { color: categoryMeta.color }]}>
 				{categoryMeta.label}
 				</Text>

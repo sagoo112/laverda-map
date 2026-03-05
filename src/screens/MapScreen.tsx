@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { View, StyleSheet, TextInput, Pressable, FlatList, Text } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Text, Image } from "react-native";
 import MapView, { MapPressEvent, Marker, MarkerPressEvent } from "react-native-maps";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -104,10 +104,10 @@ export default function MapScreen() {
 				ref={mapRef}
 				style={styles.map}
 			initialRegion={{
-				latitude: 47.55,
-				longitude: 9.65,
-				latitudeDelta: 1.5,
-				longitudeDelta: 1.5,
+				latitude: 48.0,
+				longitude: 5.0,
+				latitudeDelta: 22,
+				longitudeDelta: 28,
 			}}
 			onPress={handleMapPress}
 			>
@@ -116,6 +116,7 @@ export default function MapScreen() {
 				const lng = Number(place._lng);
 				const key = place.id ? `${place.id}-${index}` : `${lat}-${lng}-${index}`;
 				const categoryMeta = getCategoryMeta(place);
+				const showLogo = categoryMeta.key === "club" && Boolean(categoryMeta.iconImage);
 				
 				return (
 						<Marker
@@ -128,8 +129,18 @@ export default function MapScreen() {
 						anchor={{ x: 0.5, y: 1 }}
 						>
 						<View style={styles.markerWrapper}>
-						<View style={[styles.markerBubble, { backgroundColor: categoryMeta.color }]}>
-						<MaterialCommunityIcons name={categoryMeta.icon as any} size={18} color="#fff" />
+						<View
+						style={[
+							styles.markerBubble,
+							{ backgroundColor: categoryMeta.color },
+							showLogo ? styles.markerBubbleLogo : null
+						]}
+						>
+							{showLogo ? (
+								<Image source={categoryMeta.iconImage} style={styles.markerLogoFull} resizeMode="cover" />
+							) : (
+								<MaterialCommunityIcons name={categoryMeta.icon as any} size={18} color="#fff" />
+							)}
 						</View>
 						<View style={[styles.markerPointer, { borderTopColor: categoryMeta.color }]} />
 						</View>
@@ -256,6 +267,13 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 0, height: 3 },
 		shadowRadius: 4,
 		elevation: 6,
+		alignItems: "center",
+		justifyContent: "center"
+	},
+	markerBubbleLogo: {
+		padding: 0,
+		borderWidth: 0,
+		backgroundColor: "#fff"
 	},
 	markerPointer: {
 		width: 0,
@@ -266,5 +284,10 @@ const styles = StyleSheet.create({
 		borderLeftColor: "transparent",
 		borderRightColor: "transparent",
 		marginTop: -1,
+	},
+	markerLogoFull: {
+		width: 30,
+		height: 30,
+		borderRadius: 15
 	}
 });

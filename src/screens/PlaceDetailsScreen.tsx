@@ -1,12 +1,16 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Linking, ScrollView } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
 
 import { placesForMap } from "../utils/placesData";
 import { openNavigation, openInNativeMaps } from "../utils/openMaps";
 
-type Props = NativeStackScreenProps<RootStackParamList, "PlaceDetails">;
+type Props = {
+  route: {
+    params: {
+      placeId: string;
+    };
+  };
+};
 
 const items = placesForMap;
 
@@ -45,7 +49,7 @@ export default function PlaceDetailsScreen({ route }: Props) {
 
         <Pressable
           style={styles.btnOutline}
-          onPress={() => openNavigation({ navigationUrl: entry._navigationUrl, lat: entry._lat, lng: entry._lng, label })}
+          onPress={() => openNavigation({ navigationUrl: entry._navigationUrl, lat: entry._lat, lng: entry._lng })}
         >
           <Text style={styles.btnOutlineText}>Navigate (Google Maps)</Text>
         </Pressable>
