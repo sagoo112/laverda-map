@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-06-09",
+  "generatedAt": "2026-03-02",
   "entries": [
     {
       "id": "www-laverdaclub-ch-82bbf1",
@@ -995,78 +995,6 @@
       },
       "locationSource": "centroid",
       "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=20.00000,0.00000"
-    },
-    {
-      "id": "laverda-werkstatt-peter-strasser-c84b94",
-      "type": "service",
-      "category": "Werkstatt",
-      "url": null,
-      "status": null,
-      "name": "LAVERDA Werkstatt Peter Strasser",
-      "address": "Hübelgasse 9, 5445 Eggenwil, Schweiz",
-      "country": "CH",
-      "visibility": "public",
-      "verified": false,
-      "linkType": "place",
-      "tags": [],
-      "priority": 3,
-      "lastCheckedAt": null,
-      "location": {
-        "mode": "exact",
-        "lat": 47.36900083156607,
-        "lng": 8.339417094419726,
-        "label": "Hübelgasse 9, 5445 Eggenwil, Schweiz"
-      },
-      "locationSource": "excel",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.36900,8.33942"
-    },
-    {
-      "id": "laverda-werkstatt-jean-francois-ischler-9bde8e",
-      "type": "service",
-      "category": "Werkstatt",
-      "url": null,
-      "status": null,
-      "name": "LAVERDA Werkstatt Jean-François Ischler",
-      "address": "Les Charlettes 7, 2314 La Sagne, Schweiz",
-      "country": "CH",
-      "visibility": "public",
-      "verified": false,
-      "linkType": "place",
-      "tags": [],
-      "priority": 3,
-      "lastCheckedAt": null,
-      "location": {
-        "mode": "exact",
-        "lat": 47.04182880904849,
-        "lng": 6.8043280547155955,
-        "label": "Les Charlettes 7, 2314 La Sagne, Schweiz"
-      },
-      "locationSource": "excel",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.04183,6.80433"
-    },
-    {
-      "id": "projektorange-blogspot-com-d96ec7",
-      "type": "blog",
-      "category": "Blog",
-      "url": "https://projektorange.blogspot.com",
-      "status": "OK",
-      "name": "Project Orange - LAVERDA-Blog von René Lustenberger (deutsch)",
-      "address": "Luzern, Schweiz",
-      "country": "CH",
-      "visibility": "public",
-      "verified": true,
-      "linkType": "website",
-      "tags": [],
-      "priority": 3,
-      "lastCheckedAt": "2026-06-09",
-      "location": {
-        "mode": "exact",
-        "lat": 47.051360409563344,
-        "lng": 8.309177921685501,
-        "label": "Luzern, Schweiz"
-      },
-      "locationSource": "excel",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.05136,8.30918"
     }
   ]
 }
