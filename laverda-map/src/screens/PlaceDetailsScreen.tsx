@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Linking, ScrollView } from "react-native";
 
-import { placesForMap } from "../utils/placesData";
+import { usePlaces } from "../context/PlacesContext";
 import { openNavigation, openInNativeMaps } from "../utils/openMaps";
 
 type Props = {
@@ -12,10 +12,9 @@ type Props = {
   };
 };
 
-const items = placesForMap;
-
 export default function PlaceDetailsScreen({ route }: Props) {
-  const entry = useMemo(() => items.find((x) => x.id === route.params.placeId), [route.params.placeId]);
+  const { placesForMap } = usePlaces();
+  const entry = useMemo(() => placesForMap.find((x) => x.id === route.params.placeId), [placesForMap, route.params.placeId]);
 
   if (!entry) {
     return (

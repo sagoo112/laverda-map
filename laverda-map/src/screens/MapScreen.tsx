@@ -6,11 +6,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import CategoryFilter from "../components/CategoryFilter";
 import PlaceBottomSheet from "../components/PlaceBottomSheet";
-import { placesForMap } from "../utils/placesData";
+import { usePlaces } from "../context/PlacesContext";
 import { MapItem } from "../utils/normalizeEntries";
 import { getCategoryMeta } from "../utils/placeCategories";
 
 export default function MapScreen() {
+	const { placesForMap } = usePlaces();
 	const [selectedCategory, setSelectedCategory] = useState("all");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedPlace, setSelectedPlace] = useState<MapItem | null>(null);
@@ -18,7 +19,7 @@ export default function MapScreen() {
 	const insets = useSafeAreaInsets();
 	const mapRef = useRef<MapView>(null);
 
-	const PLACES: MapItem[] = useMemo(() => placesForMap.filter((p) => p.type !== "blog"), []);
+	const PLACES: MapItem[] = useMemo(() => placesForMap.filter((p) => p.type !== "blog"), [placesForMap]);
 
 	const categories = useMemo(() => {
 		const unique = new Set<string>();
