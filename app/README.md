@@ -47,7 +47,8 @@ Public variables and map keys are part of the compiled app, never server secrets
 No API URL is required to browse the bundled directory. Failed updates retain
 the last successful public response. A missing Android Maps key shows a
 directory fallback, not an unusable map or native crash. Rebuild the native app
-after changing keys/plugins. iOS uses Apple Maps without a Google key.
+after changing keys, plugins, or native package versions. iOS uses Apple Maps
+without a Google key.
 
 The existing Android identifier `com.anonymous.laverdamap` was retained.
 Choose release identifiers, signing and store accounts explicitly before shipping;
