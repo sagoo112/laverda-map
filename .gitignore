@@ -10,6 +10,7 @@ obj/
 
 # IDE / tools
 .claude/
+.idea/
 
 # OS
 .DS_Store
@@ -17,3 +18,6 @@ Thumbs.db
 
 # Excel / data files (not source)
 *.xlsx
+
+# Local verification runtimes and temporary databases
+.local-tools/
