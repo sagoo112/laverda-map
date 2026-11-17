@@ -1,0 +1,48 @@
+name: Verify app and API
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+permissions:
+  contents: read
+jobs:
+  app:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: app
+    env:
+      EXPO_NO_DOTENV: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npm run verify
+      - run: npm run format:check
+      - run: npx expo install --check
+      - run: npx expo export --platform android --platform ios --max-workers 2
+  api:
+    runs-on: ubuntu-24.04
+    env:
+      DB_HOST: localhost
+      DB_PORT: '3306'
+      DB_NAME: laverda_test_ci
+      DB_USER: root
+      DB_PASSWORD: ''
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-server php-cli php-mysql php-mbstring
+          sudo service mariadb start
+          sudo mariadb -e 'CREATE DATABASE laverda_test_ci CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
+      - run: find api -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php api/tests/unit.php
+      - run: sudo -E php api/tests/integration.php
+      - run: |
+          sudo mariadb -e 'CREATE DATABASE laverda_test_upgrade_ci CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
+          sudo -E env DB_NAME=laverda_test_upgrade_ci php api/tests/upgrade.php
