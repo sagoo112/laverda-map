@@ -1,0 +1,35 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- assertVisible:
+    id: "explore-heading"
+- tapOn:
+    id: "view-list"
+- tapOn:
+    id: "place-search"
+- inputText: "mori switzerland"
+- hideKeyboard
+- assertVisible: "LAVERDA Classic by Hans Ruedi.*"
+- tapOn: "Clear search"
+- tapOn:
+    id: "place-search"
+- inputText: "Eggenwil"
+- hideKeyboard
+- assertVisible: "LAVERDA Club Schweiz - LCS.*"
+- tapOn: "Save LAVERDA Club Schweiz - LCS.*"
+- tapOn:
+    id: "saved-filter"
+- assertVisible: "LAVERDA Club Schweiz - LCS.*"
+- tapOn: "View LAVERDA Club Schweiz - LCS.*"
+- assertVisible: "Navigate"
+- tapOn: "Expand details"
+- assertVisible: "Collapse details"
+- tapOn: "Close place details"
+- stopApp
+- launchApp
+- tapOn:
+    id: "view-list"
+- tapOn:
+    id: "saved-filter"
+- assertVisible: "LAVERDA Club Schweiz - LCS.*"

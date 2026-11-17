@@ -1,0 +1,9 @@
+node_modules
+android
+ios
+.expo
+.claude
+.vscode
+dist
+src/features/places/data
+package-lock.json
