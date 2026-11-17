@@ -1,4 +1,13 @@
-# SQLite DB files (generated at runtime)
+# Local secrets and machine-specific PHP configuration
+.env
+.env.*
+!.env.example
+config.local.php
+php.ini
+.user.ini
+
+# Runtime output
+*.log
 *.db
 *.db-shm
 *.db-wal

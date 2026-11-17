@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace LaverdaApi\Http;
+
+final class Router
+{
+    public static function dispatch(): never
+    {
+        $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        if ($method === 'OPTIONS') {
+            http_response_code(204);
+            exit;
+        }
+
+        $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $path = is_string($requestPath) ? '/' . trim($requestPath, '/') : '/';
+
+        if ($path === '/auth/unlock') {
+            if ($method !== 'POST') {
+                header('Allow: POST, OPTIONS');
+                JsonResponse::send(['error' => 'method_not_allowed'], 405);
+            }
+
+            UnlockHandler::handle();
+        }
+
+        if ($method !== 'GET') {
+            header('Allow: GET, OPTIONS');
+            JsonResponse::send(['error' => 'method_not_allowed'], 405);
+        }
+
+        if ($path === '/health') {
+            HealthHandler::handle();
+        }
+
+        $tenantSlug = null;
+        $placeId = null;
+        $isCollection = false;
+
+        if (preg_match('#^/api/v1/tenants/([^/]+)/places$#', $path, $matches) === 1) {
+            $tenantSlug = rawurldecode($matches[1]);
+            $isCollection = true;
+        } elseif (preg_match('#^/api/v1/tenants/([^/]+)/places/([^/]+)$#', $path, $matches) === 1) {
+            $tenantSlug = rawurldecode($matches[1]);
+            $placeId = rawurldecode($matches[2]);
+        } elseif ($path === '/api/places') {
+            // Compatibility endpoint used by the existing React Native app.
+            $tenantSlug = 'laverda';
+            $isCollection = true;
+        } elseif (preg_match('#^/api/places/([^/]+)$#', $path, $matches) === 1) {
+            $tenantSlug = 'laverda';
+            $placeId = rawurldecode($matches[1]);
+        } else {
+            JsonResponse::send(['error' => 'not_found'], 404);
+        }
+
+
+        PlacesHandler::handle($tenantSlug, $placeId, $isCollection);
+    }
+}
