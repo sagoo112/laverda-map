@@ -38,6 +38,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "mapsAndroidConfigured": false,
+      "eas": {
+        "projectId": "fdc1c47a-7194-47f2-8d98-06e33114a985"
+      }
+    },
+    "owner": "goodsa"
   }
 }

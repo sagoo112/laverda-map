@@ -1,0 +1,56 @@
+# EAS uploads from the Git root. This replaces all .gitignore files for uploads.
+# Keep the app's JavaScript source, assets, config, scripts and lockfile.
+.git
+node_modules
+.expo
+dist
+web-build
+expo-env.d.ts
+.kotlin
+*.orig.*
+*.jks
+*.keystore
+*.apk
+*.aab
+*.ipa
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+credentials.json
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+Thumbs.db
+.env*
+*.tsbuildinfo
+bin
+obj
+*.user
+.vs
+.claude
+.idea
+.vscode
+.codex
+.agents
+*.xlsx
+.local-tools
+
+# EAS generates native projects from app.json and app.config.js.
+/app/android
+/app/ios
+
+# Backend, private server config, catalogue data and local tests stay on this PC.
+/api
+/archive
+/.github
+/app/tests
+/app/.maestro
+/app/README.md
+/app/EAS-SETUP.md
+/README.md
+/IMPLEMENTATION.md
+/REVIEW.md
