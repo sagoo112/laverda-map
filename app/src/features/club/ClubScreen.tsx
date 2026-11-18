@@ -1,23 +1,28 @@
 import React, { useState } from "react";
-import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlaces } from "../places/PlacesProvider";
 import PlacesStatus from "../places/PlacesStatus";
 import { Button, Icon, TextAction } from "../../shared/ui";
 import { colors, space, ui } from "../../shared/theme";
 import { openWebsite } from "../../shared/links";
+import { useAuth } from "../auth/AuthProvider";
+import ProposalForm from "./ProposalForm";
+import { contactConfigured, contactEmail } from "./proposal";
+import { prepareEmail } from "./mail";
 
-const email = process.env.EXPO_PUBLIC_CONTACT_EMAIL?.trim();
-const canContact = !!email && /^[^\s@?&#]+@[^\s@?&#]+\.[^\s@?&#]+$/.test(email);
 export default function ClubScreen() {
+  const { signOut } = useAuth();
   const { places } = usePlaces();
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [proposalOpen, setProposalOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const countries = new Set(
     places.map((place) => place.country).filter((country) => country !== "unknown"),
   ).size;
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       style={ui.screen}
       contentContainerStyle={[ui.content, { paddingTop: insets.top + space.md, gap: 0 }]}
     >
@@ -39,7 +44,7 @@ export default function ClubScreen() {
       <View style={styles.stats}>
         <View style={{ flex: 1, gap: space.xs }}>
           <Text style={styles.number}>{places.length}</Text>
-          <Text style={ui.caption}>public entries</Text>
+          <Text style={ui.caption}>directory entries</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={{ flex: 1, gap: space.xs }}>
@@ -53,24 +58,37 @@ export default function ClubScreen() {
         onPress={() => void openWebsite("https://www.laverdaclub.ch/")}
       />
       <View style={[ui.section, { marginTop: space.xl }]}>
-        <Text style={ui.heading}>Share a good find</Text>
+        <Text style={ui.heading}>Contact & suggestions</Text>
         <Text style={ui.body}>
           Know a workshop, club or collection? Help fellow riders find it. Share its website and
           accurate location with the club.
         </Text>
-        {canContact ? (
-          <TextAction
-            title="Suggest a place"
-            icon="email-outline"
-            onPress={() => {
-              void Linking.openURL(
-                "mailto:" + email + "?subject=Laverda%20directory%20suggestion",
-              ).catch(() => Alert.alert("Could not open email", "You can email " + email + "."));
-            }}
-          />
-        ) : (
-          <Text style={ui.caption}>Contact details are on the club website.</Text>
+        <Text selectable style={ui.caption}>
+          {contactEmail}
+          {!contactConfigured ? " · placeholder; recipient not configured yet" : ""}
+        </Text>
+        {!contactConfigured && (
+          <Text style={ui.caption}>
+            Email drafts open without a recipient until the club address is configured. Add the real
+            recipient before sending.
+          </Text>
         )}
+        <TextAction
+          title="Contact the club"
+          icon="email-outline"
+          onPress={() => {
+            void prepareEmail("Laverda app enquiry", "Hello Laverda team,\n\n").catch((failure) =>
+              Alert.alert(
+                "Could not open email",
+                failure instanceof Error ? failure.message : "Please set up an email app.",
+              ),
+            );
+          }}
+        />
+        {!proposalOpen && (
+          <Button title="Suggest a new entry" icon="plus" onPress={() => setProposalOpen(true)} />
+        )}
+        {proposalOpen && <ProposalForm onClose={() => setProposalOpen(false)} />}
       </View>
       <View style={ui.section}>
         <Pressable
@@ -87,9 +105,9 @@ export default function ClubScreen() {
         {privacyOpen && (
           <View style={{ gap: space.md }}>
             <Text style={ui.body}>
-              The included directory and your last successful update stay available offline.
-              Bookmarks stay on this device. Maps, websites and directions may still need a
-              connection.
+              The directory is loaded after server-verified sign-in and kept in memory for this
+              session. An internet connection is required to sign in and verify access. Only
+              bookmark IDs stay on this device.
             </Text>
             <Text style={ui.body}>
               Location is optional and used only when you choose Near me. It is never sent to this
@@ -102,6 +120,7 @@ export default function ClubScreen() {
         )}
       </View>
       <PlacesStatus />
+      <Button title="Sign out" secondary onPress={() => void signOut()} />
     </ScrollView>
   );
 }

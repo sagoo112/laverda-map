@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Platform, Text } from "react-native";
+import { View, StyleSheet, Platform, Text, Image } from "react-native";
 import Constants from "expo-constants";
 import MapView, { Marker } from "react-native-maps";
 import type { MappablePlace } from "./model";
@@ -72,11 +72,20 @@ export default function PlacesMap({ places, fitRevision, onSelect, onShowList }:
           }}
         >
           <View style={[styles.marker, { borderColor: categories[place.type].color }]}>
-            <Icon
-              name={categories[place.type].icon}
-              color={categories[place.type].color}
-              size={22}
-            />
+            {place.type === "club" ? (
+              <Image
+                source={require("../../../assets/laverda-logo.jpg")}
+                style={{ width: 29, height: 24 }}
+                resizeMode="contain"
+                accessibilityLabel="Laverda club"
+              />
+            ) : (
+              <Icon
+                name={categories[place.type].icon}
+                color={categories[place.type].color}
+                size={22}
+              />
+            )}
           </View>
         </Marker>
       ))}

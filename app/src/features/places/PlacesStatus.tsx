@@ -9,7 +9,7 @@ export default function PlacesStatus({ compact = false }: { compact?: boolean })
   if (!loading && !error && source === "live" && !storageError) return null;
   const label =
     source === "bundled"
-      ? "Included directory"
+      ? "Directory not loaded"
       : source === "saved"
         ? "Saved offline"
         : "Latest directory";

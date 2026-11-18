@@ -3,13 +3,14 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { parseEntries } = require("../src/features/places/schema.ts");
 const { normalizePlaces } = require("../src/features/places/model.ts");
-const snapshot = require("../src/features/places/data/places.generated.json");
+const snapshot = require("./fixtures/places.generated.json");
 test(
   "live PHP/MariaDB response matches the generated mobile contract",
-  { skip: !process.env.LAVERDA_TEST_API_URL },
+  { skip: !process.env.LAVERDA_TEST_API_URL || !process.env.LAVERDA_TEST_TOKEN },
   async () => {
     const response = await fetch(
       process.env.LAVERDA_TEST_API_URL.replace(/\/+$/, "") + "/api/v1/tenants/laverda/places",
+      { headers: { Authorization: "Bearer " + process.env.LAVERDA_TEST_TOKEN } },
     );
     assert.equal(response.status, 200);
     const entries = parseEntries(await response.json());

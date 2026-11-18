@@ -10,6 +10,8 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PlacesProvider } from "../features/places/PlacesProvider";
+import { AuthProvider } from "../features/auth/AuthProvider";
+import AuthGate from "../features/auth/AuthGate";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(() => new QueryClient());
@@ -31,7 +33,11 @@ export default function Providers({ children }: { children: ReactNode }) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={client}>
-          <PlacesProvider>{children}</PlacesProvider>
+          <AuthProvider>
+            <AuthGate>
+              <PlacesProvider>{children}</PlacesProvider>
+            </AuthGate>
+          </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

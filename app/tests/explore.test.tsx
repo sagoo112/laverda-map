@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, render, screen, userEvent } from "@testing-library/react-native";
+import { cleanup, render, screen, userEvent, waitFor } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,8 +9,17 @@ import ResourcesScreen from "../src/features/resources/ResourcesScreen";
 import ClubScreen from "../src/features/club/ClubScreen";
 import { Alert } from "react-native";
 import * as Location from "expo-location";
+import source from "./fixtures/places.generated.json";
+import { requestJson } from "../src/shared/api";
 import { favoritesKey } from "../src/features/places/cache";
 
+jest.mock("../src/shared/api", () => ({
+  ...jest.requireActual("../src/shared/api"),
+  API_URL: "https://api.test.invalid",
+  requestJson: jest.fn(),
+}));
+jest.mock("../src/features/auth/AuthProvider", () => ({ useAuth: () => ({ signOut: jest.fn() }) }));
+jest.mock("../src/features/club/mail", () => ({ prepareEmail: jest.fn() }));
 jest.mock("@react-navigation/native", () => ({ useFocusEffect: () => {} }));
 jest.mock("../src/features/places/PlacesMap", () => ({
   __esModule: true,
@@ -35,19 +44,27 @@ afterEach(async () => {
 async function mount(child: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   clients.push(client);
-  return render(
+  const result = await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <QueryClientProvider client={client}>
         <PlacesProvider>{child}</PlacesProvider>
       </QueryClientProvider>
     </SafeAreaProvider>,
   );
+  await waitFor(() =>
+    expect(
+      client.getQueryData<{ fetchedAt: string }>(["places", "laverda", "https://api.test.invalid"])
+        ?.fetchedAt,
+    ).toBeTruthy(),
+  );
+  return result;
 }
 beforeEach(async () => {
   await AsyncStorage.clear();
   jest.clearAllMocks();
+  jest.mocked(requestJson).mockResolvedValue(source);
 });
-test("cold offline launch opens directory; search and saved filtering work", async () => {
+test("authenticated API directory supports search and saved filtering", async () => {
   const user = userEvent.setup();
   await mount(<ExploreScreen />);
   expect(screen.queryByText(/password/i)).toBeNull();

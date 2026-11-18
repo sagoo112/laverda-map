@@ -11,7 +11,7 @@ const {
   countryName,
 } = require("../src/features/places/model.ts");
 const { webUrl } = require("../src/shared/urls.ts");
-const source = require("../src/features/places/data/places.generated.json");
+const source = require("./fixtures/places.generated.json");
 const seed = require("../../api/places.json");
 
 test("generated snapshot preserves every public seed field and allocated ID", () => {

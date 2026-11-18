@@ -14,17 +14,13 @@ import { ApiError, API_URL, requestJson } from "../../shared/api";
 import { parseEntries } from "./schema";
 import { normalizePlaces, type Place } from "./model";
 import {
-  cacheKey,
-  decodeCache,
   decodeFavorites,
-  encodeCache,
   favoritesKey,
   TENANT,
+  removeLegacyDirectory,
   type Snapshot,
 } from "./cache";
-import bundled from "./data/places.generated.json";
-
-const initial: Snapshot = { entries: parseEntries(bundled), fetchedAt: null };
+const initial: Snapshot = { entries: [], fetchedAt: null };
 const queryKey = ["places", TENANT, API_URL] as const;
 type PlacesContextValue = {
   places: Place[];
@@ -50,15 +46,9 @@ export function PlacesProvider({ children }: { children: ReactNode }) {
   const writeQueue = useRef(Promise.resolve());
   useEffect(() => {
     let active = true;
-    Promise.allSettled([
-      AsyncStorage.getItem(cacheKey(API_URL)),
-      AsyncStorage.getItem(favoritesKey),
-    ])
+    Promise.allSettled([removeLegacyDirectory(AsyncStorage), AsyncStorage.getItem(favoritesKey)])
       .then(([cached, saved]) => {
         if (!active) return;
-        const restored = cached.status === "fulfilled" ? decodeCache(cached.value) : null;
-        if (restored)
-          client.setQueryData(queryKey, restored, { updatedAt: Date.parse(restored.fetchedAt!) });
         if (saved.status === "fulfilled") {
           setFavorites(decodeFavorites(saved.value));
           setFavoritesReady(true);
@@ -67,7 +57,7 @@ export function PlacesProvider({ children }: { children: ReactNode }) {
           setStorageError(
             saved.status === "rejected"
               ? "Saved places could not be loaded. Bookmarks are unchanged; try reopening the app."
-              : "The offline update could not be loaded. Your saved places are still available.",
+              : "Old directory data could not be removed. Please clear app storage.",
           );
         }
       })
@@ -96,11 +86,6 @@ export function PlacesProvider({ children }: { children: ReactNode }) {
         await requestJson("/api/v1/tenants/" + TENANT + "/places", { signal }),
       ).filter((entry) => entry.visibility === "public");
       const snapshot = { entries, fetchedAt: new Date().toISOString() };
-      try {
-        await AsyncStorage.setItem(cacheKey(API_URL), encodeCache(snapshot));
-      } catch {
-        setStorageError("Could not save the latest places for offline use.");
-      }
       setLive(true);
       return snapshot;
     },
@@ -131,7 +116,7 @@ export function PlacesProvider({ children }: { children: ReactNode }) {
     loading: query.isFetching,
     error: query.error?.message ?? null,
     cachedAt: query.data.fetchedAt,
-    source: live ? "live" : query.data.fetchedAt ? "saved" : "bundled",
+    source: live ? "live" : "bundled",
     storageError,
     refresh,
     favorites,
