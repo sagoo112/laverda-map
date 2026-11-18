@@ -33,14 +33,18 @@ api/
   src/Http/                  routing, handlers, CORS and responses
   src/Places/                repository, DTO mapper, validator and importer
   src/                       bootstrap, configuration, PDO and migrations
+  config.example.php         credential-free private configuration template
+  config.local.php           optional server-only secrets; never commit or expose
   places.json                reproducible import source; not read by the API
   tests/integration.php      isolated CLI integration suite
 ```
 
 ## Configuration
 
-The application reads configuration from the process environment, with a fallback
-to same-named server variables in `$_SERVER` (not request headers):
+Configuration is resolved per value, in this order: process environment,
+same-named server variables in `$_SERVER` (not request headers), then the optional
+`api/config.local.php` file. Explicit empty environment values are not replaced
+by file values. The file works for both web requests and CLI migration/imports.
 
 | Variable | Required | Example |
 |---|---:|---|
@@ -56,6 +60,28 @@ Never commit real credentials. The API does not load a repository `.env` file.
 CLI imports and the current app need only the five `DB_*` variables on the API.
 The current app opens the public directory without a password. Keep APP_PASSWORD
 only if supporting older app builds; the compatibility endpoint is not authentication.
+
+### Shared hosting without editable environment variables
+
+Copy `config.example.php` to `config.local.php` beside `public/` on the server.
+Fill in the five `DB_*` strings using the database connection details shown by
+Plesk. Host and port are separate: `localhost:3306` becomes `localhost` and `3306`.
+Use the database password, which need not be the FTP password. Keep the file's
+single-quoted PHP strings: escape an apostrophe as `\'` and a backslash as `\\`.
+Dollar signs, semicolons and hash characters remain literal inside these strings.
+
+Only `public/` may be the domain's document root. Never put the private file
+inside `public/`, and never serve the API project directory itself. Where available,
+give the file permissions `600` (owner read/write); the PHP handler must run as
+that owner or otherwise have explicitly granted read access. Do not use `777`.
+The supplied `.gitignore` excludes `config.local.php`; do not force-add it.
+Preserve the server's private file during future uploads and keep credential
+backups private. The template contains no real password.
+
+The loader accepts only the documented keys with string values, and fails on
+invalid files without including their contents in its error messages. It uses a
+fixed path relative to the backend, independent of the CLI working directory.
+No `.env` parser, Composer package, or PHP-FPM administration access is needed.
 
 ## Local setup
 
@@ -188,14 +214,16 @@ invalid JSON/password type, and 413 for request bodies over 4 KiB.
    optionally `APP_PASSWORD` for legacy clients, as per-domain server environment variables. If Plesk exposes
    additional PHP-FPM
    directives, pool entries use the form `env[DB_HOST] = localhost`. If this control
-   is unavailable on the shared-hosting subscription, ask Hosttech support to set
-   the variables securely. Do not add credentials to uploaded tracked files.
+   is unavailable on the shared-hosting subscription, use the private
+   `config.local.php` file described above, or have Hosttech set the variables.
+   Do not add credentials to uploaded tracked files.
 6. Back up existing databases. Run `scripts/migrate.php` with the selected PHP CLI
    using SSH or a temporary Plesk Scheduled Task, with an administrative migration
-   account and the DB environment above. If CLI execution is unavailable,
+   account and the DB environment above (or the private configuration file). If CLI execution is unavailable,
    coordinate with Hosttech support; do not upload a web-accessible migration/import endpoint.
 7. Run `scripts/import_places.php` once with Plesk SSH or a temporary Plesk Scheduled
-   Task using the selected PHP CLI. Supply the same DB environment to that CLI task.
+   Task using the selected PHP CLI. Supply the same DB environment to that CLI task,
+   or let it read the same private configuration file.
    Run it a second time if you want to verify idempotency, then remove the task.
 8. Upload `.htaccess` (some FTP clients hide dotfiles) and test the endpoints.
 9. Issue and enable a Let's Encrypt certificate for `api.laverdaclub.ch`, force HTTPS,
@@ -252,6 +280,7 @@ From the repository root, with PHP and MariaDB on PATH:
 ```powershell
 Get-ChildItem .\api -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 php .\api\tests\unit.php
+php .\api\tests\config.php
 # Create a NEW, EMPTY database using your local test administration account:
 mariadb --user=root --password --execute="CREATE DATABASE laverda_test_local CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 # Set DB_HOST, DB_PORT, DB_USER and DB_PASSWORD to the isolated local test account.

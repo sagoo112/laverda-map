@@ -8,6 +8,9 @@ use RuntimeException;
 
 final class Config
 {
+    /** @var array<string, string>|null */
+    private static ?array $fileValues = null;
+
     /** @return array{host: string, port: int, name: string, user: string, password: string} */
     public static function database(): array
     {
@@ -58,6 +61,45 @@ final class Config
     {
         $value = getenv($name);
         // Some shared-hosting handlers expose server configuration only through $_SERVER.
-        return $value !== false ? $value : (is_string($_SERVER[$name] ?? null) ? $_SERVER[$name] : false);
+        if ($value !== false) {
+            return $value;
+        }
+        if (is_string($_SERVER[$name] ?? null)) {
+            return $_SERVER[$name];
+        }
+        return self::fileValues()[$name] ?? false;
+    }
+
+    /** @return array<string, string> */
+    private static function fileValues(): array
+    {
+        if (self::$fileValues !== null) {
+            return self::$fileValues;
+        }
+        // A sibling of public/, never a file selected by a request or working directory.
+        $path = dirname(__DIR__) . '/config.local.php';
+        if (!file_exists($path)) {
+            return self::$fileValues = [];
+        }
+        if (!is_file($path) || !is_readable($path)) {
+            throw new RuntimeException('Private configuration file is not readable.');
+        }
+        try {
+            $values = (static fn (string $file): mixed => require $file)($path);
+        } catch (\Throwable) {
+            // Syntax errors can contain fragments of a password. Do not log those.
+            throw new RuntimeException('Private configuration file could not be loaded.');
+        }
+        if (!is_array($values)) {
+            throw new RuntimeException('Private configuration must return an array.');
+        }
+        $allowed = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
+            'CORS_ALLOWED_ORIGIN', 'APP_PASSWORD'];
+        foreach ($values as $key => $value) {
+            if (!in_array($key, $allowed, true) || !is_string($value)) {
+                throw new RuntimeException('Private configuration contains an unsupported key or non-string value.');
+            }
+        }
+        return self::$fileValues = $values;
     }
 }
