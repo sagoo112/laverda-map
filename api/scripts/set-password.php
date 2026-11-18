@@ -13,7 +13,9 @@ if (!preg_match('/^[a-z0-9-]{1,128}$/D', $slug)) {
     exit(1);
 }
 try {
-    fwrite(STDERR, "Enter club passphrase (15–72 UTF-8 bytes), then repeat on the next line. Input may be visible in your terminal; never put it in command arguments.\n");
+    if (stream_isatty(STDIN)) {
+        fwrite(STDERR, "Enter club passphrase (15–72 UTF-8 bytes), then repeat on the next line. Input may be visible in your terminal; never put it in command arguments.\n");
+    }
     $password = rtrim((string) fgets(STDIN, 1024), "\r\n");
     $confirmation = rtrim((string) fgets(STDIN, 1024), "\r\n");
     if ($password !== $confirmation) {

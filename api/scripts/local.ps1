@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('Start', 'Stop', 'Status', 'Test', 'Import')]
+    [ValidateSet('Start', 'Stop', 'Status', 'Test', 'Import', 'SetPassword')]
     [string]$Action = 'Start',
     [string]$StateDirectory = (Join-Path $env:LOCALAPPDATA 'LaverdaDev\workspace-app')
 )
@@ -185,6 +185,33 @@ function Start-LocalStack {
     Start-LocalApi
 }
 
+function Set-LocalClubPassword {
+    if ($null -eq (Get-OwnedProcess 'mariadb')) {
+        throw 'Start the local stack with local.ps1 Start before setting its club password.'
+    }
+    $first = $null
+    $second = $null
+    $previousEncoding = $OutputEncoding
+    try {
+        $first = Read-Host 'New LOCAL club passphrase (15-72 UTF-8 bytes)' -AsSecureString
+        $second = Read-Host 'Repeat LOCAL club passphrase' -AsSecureString
+        $plain = [pscredential]::new('club', $first).GetNetworkCredential().Password
+        $confirmation = [pscredential]::new('club', $second).GetNetworkCredential().Password
+        if ($plain -cne $confirmation) { throw 'Passphrases do not match. Nothing changed.' }
+        # Windows PowerShell otherwise replaces non-ASCII characters in native pipes.
+        $OutputEncoding = [Text.UTF8Encoding]::new($false)
+        Use-LocalEnvironment 'Admin' 'api_laverda_local' {
+            @($plain, $confirmation) | & $phpExe (Join-Path $apiRoot 'scripts\set-password.php') laverda
+            if ($LASTEXITCODE -ne 0) { throw 'Local club password update failed.' }
+        }
+    } finally {
+        $OutputEncoding = $previousEncoding
+        if ($null -ne $first) { $first.Dispose() }
+        if ($null -ne $second) { $second.Dispose() }
+        Remove-Variable plain, confirmation -ErrorAction SilentlyContinue
+    }
+}
+
 function Show-LocalStatus {
     $database = Get-OwnedProcess 'mariadb'
     $api = Get-OwnedProcess 'api'
@@ -240,6 +267,8 @@ if (Test-Path $settingsPath) {
     if ($config.ProjectRoot -ne $projectRoot -or $config.DataDirectory -ne (Join-Path $StateDirectory 'data')) {
         throw 'The saved local configuration belongs to another project or data directory.'
     }
+} elseif ($Action -eq 'SetPassword') {
+    throw 'Initialize and start the local stack with local.ps1 Start first.'
 } elseif ($Action -in @('Status', 'Stop')) {
     Write-Host 'The local stack has not been initialized. Nothing to stop.'
     exit 0
@@ -257,6 +286,7 @@ switch ($Action) {
     'Stop' { Stop-LocalStack }
     'Status' { Show-LocalStatus }
     'Test' { Test-LocalStack }
+    'SetPassword' { Set-LocalClubPassword }
     'Import' {
         Start-LocalStack
         Use-LocalEnvironment 'Admin' 'api_laverda_local' { Invoke-LocalPhpFile 'scripts\migrate.php' }
