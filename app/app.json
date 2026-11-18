@@ -4,7 +4,7 @@
     "slug": "laverda-map",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/laverda-app-icon.png",
     "userInterfaceStyle": "light",
     "plugins": [
       "expo-font",
@@ -30,14 +30,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/laverda-adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.laverdamap"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/laverda-app-icon.png"
     },
     "extra": {
       "mapsAndroidConfigured": false,
