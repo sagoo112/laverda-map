@@ -112,7 +112,7 @@ Es gibt getrennte Datenbankrollen:
 
 - `root`: Einrichtung, Migrationen, isolierte Tests und sauberer Shutdown.
 - `laverda_import_local`: SELECT, INSERT und UPDATE für den Import.
-- `laverda_api_local`: ausschliesslich SELECT für die laufende API.
+- `laverda_api_local`: SELECT auf Verzeichnisdaten; gezielte Schreibrechte nur auf Sitzungs- und Versuchslimit-Tabellen.
 
 Der Helfer verwendet die vorhandenen portablen Programme unter
 `.local-tools/php` und `.local-tools/mariadb/*/bin`. Sie sind nicht Teil eines

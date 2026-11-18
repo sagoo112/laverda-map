@@ -1,145 +1,85 @@
-# Laverda app
+# Mobile Laverda-App
 
-Expo SDK 57 / React Native 0.86.3 / React 19.2.3. PHP/PDO/MariaDB remains the backend.
-The directory is public: no password screen or direct MariaDB access.
+Expo SDK 57, React Native 0.86, React 19 und TypeScript. Die App spricht ausschliesslich mit der PHP-API über HTTPS; sie enthält keine Datenbank-Zugangsdaten.
 
-## Local setup
+## Funktionen
 
-Use Node 24 LTS (at least 24.13), npm, and Android Studio for Android native builds.
-iOS native builds need macOS and Xcode 26.4 or newer. SDK 57 supports iOS 16.4+;
-older iOS devices supported by SDK 54 are no longer supported.
-Use an Xcode 26.4 build image for now. Xcode 27 requires Expo's scene-support
-configuration; verify the current SDK 57 release notes before switching.
+- Clubpasswort-Abfrage vor dem Verzeichnis, geschützte serverseitige Sitzungen und Abmeldung.
+- Explore mit Karte/Liste, gemeinsamer Suche, Filtern, Favoriten und optionaler Entfernungssortierung.
+- Club-Marker verwenden das Laverda-Logo; andere Kategorien behalten ihre eigenen Symbole. Nur tatsächliche/ungefähre Zielorte erhalten Marker; Länderzentren und Online-Ressourcen bleiben in der Liste.
+- Resources für Blogs, Foren und Register; Club-Seite mit Kontakt und Eintragsvorschlägen.
+- Gemeinsame Gestaltung mit warmen Flächen, klarer Typografie und gut erreichbaren Bedienelementen.
 
-From `app/`:
+## Einrichtung
+
+Node 24.13+ und npm verwenden. Android benötigt Android Studio/SDK und Java; iOS benötigt macOS/Xcode. Aus `app/`:
 
 ```powershell
 npm ci
-npm run data:check
 npm run verify
-npm start
-# A development build is recommended for the upgraded native dependencies:
-npm run android
-# On macOS:
-npm run ios
-# Browser directory preview (native map is intentionally not rendered on web):
-npm run web
+npx expo start --dev-client
+npx expo run:android
+# Auf macOS:
+npx expo run:ios
 ```
 
-If upgrading an old local native project, preserve any native customisations and
-run `npx expo prebuild --clean` before rebuilding. The generated Android/iOS
-directories are ignored; app.json and app.config.js are the source of native
-configuration. Do not delete custom native work without backing it up.
-The previous local Android project from this upgrade is preserved under
-`../.local-tools/android-sdk54-backup/`.
+Native Änderungen, insbesondere SecureStore, MailComposer, Expo-Patches und Maps-Konfiguration, benötigen einen neuen Android-/iOS-Build. Ein JavaScript-Neuladen reicht dafür nicht. Generierte native Ordner bleiben ignoriert. Bei OneDrive-/Windows-Pfadlängenfehlern eine kurze Arbeitskopie ausserhalb von OneDrive und einen kurzen Gradle-Cache verwenden; vorhandene native Anpassungen und Debug-Signatur erhalten.
 
-## Build-time configuration
+## Konfiguration
 
-Set these in your environment or an untracked `.env` file, then restart Expo.
-Public variables and map keys are part of the compiled app, never server secrets.
+Ungetrackte `.env.local` oder Build-Umgebung:
 
-| Variable                    | Purpose                                                              |
-| --------------------------- | -------------------------------------------------------------------- |
-| EXPO_PUBLIC_API_URL         | API origin, eventually https://api.laverdaclub.ch; no trailing route |
-| GOOGLE_MAPS_ANDROID_API_KEY | Android Maps SDK key; restrict to package and signing certificate    |
-| EXPO_PUBLIC_CONTACT_EMAIL   | Optional real club contribution email                                |
+| Variable                      | Bedeutung                                                             |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `EXPO_PUBLIC_API_URL`         | API-Origin, z. B. `https://api.laverdaclub.ch`, ohne angehängte Route |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Auf Android-Paket und Signatur eingeschränkter Maps-SDK-Schlüssel     |
+| `EXPO_PUBLIC_CONTACT_EMAIL`   | Echte Empfängeradresse für Kontakt und Vorschläge                     |
 
-No API URL is required to browse the bundled directory. Failed updates retain
-the last successful public response. A missing Android Maps key shows a
-directory fallback, not an unusable map or native crash. Rebuild the native app
-after changing keys, plugins, or native package versions. iOS uses Apple Maps
-without a Google key.
+Diese Werte sind Client-Konfiguration, keine Serverpasswörter. Clubpasswort und DB-Zugang gehören niemals in `EXPO_PUBLIC_*`, App-Code oder Git. Android-ID: `com.anonymous.laverdamap`. iOS verwendet Apple Maps. Google Maps benötigt ein eingerichtetes Cloud-Projekt, Maps SDK for Android, passende Schlüsselbeschränkungen und gegebenenfalls Abrechnung.
 
-The existing Android identifier `com.anonymous.laverdamap` was retained.
-Choose release identifiers, signing and store accounts explicitly before shipping;
-no store deployment or credentials are configured by this project.
+Ohne Kontaktadresse steht sichtbar `kontakt@example.org`. Der Mail-Entwurf hat dann absichtlich keinen Empfänger. Erst nach Eintragen einer echten Adresse und Neustart/Neu-Bundling geht er an den Club. Zugang ohne konfigurierte API ist nicht möglich.
 
-## Structure and data contract
+## Anmeldung und lokale Daten
 
-- `src/app/`: providers and typed navigation.
-- `src/features/places/`: API schema, normalised model, selectors, cache, map,
-  cards, draggable details and Explore.
-- `src/features/resources/`: independent blogs, forums and registries.
-- `src/features/club/`: club information and contributions.
-- `src/shared/`: theme, buttons/icons, safe links and HTTP requests.
-- `tests/`: pure data/HTTP tests and React Native component interaction tests.
-- `.maestro/`: native smoke flow for a built app.
-- `../archive/data/`: historical datasets, not bundled.
+1. Die App sendet das eingegebene Clubpasswort an den Tenant-Login-Endpunkt.
+2. Nach Prüfung des DB-Hashes stellt der Server ein zufälliges Token mit maximal 24 Stunden Gültigkeit aus.
+3. Nur das Token wird nativ in Expo SecureStore gespeichert; auf Web bleibt es ausschliesslich im Arbeitsspeicher.
+4. Bei Neustart und Rückkehr aus dem Hintergrund wird die Sitzung online geprüft; bis dahin ist das Verzeichnis verborgen. Im Vordergrund wird sie zusätzlich minütlich überprüft, ohne Formularzustände bei erfolgreicher Prüfung zurückzusetzen.
+5. Ablauf, Abmeldung und HTTP 401 sperren die App. Ein Passwortwechsel widerruft serverseitig bestehende Sitzungen. Ohne Verbindung zur Sitzungsprüfung bleibt sie gesperrt.
 
-The API returns `{ entries: PlaceDto[] }` and a single DTO for detail requests.
-Zod validates enums, nullability, dates, coordinates, booleans and unique IDs.
-The app then creates a separate display model; it never changes API IDs.
-Only explicit public visibility is shown.
+Keine Runtime-Imports von `places.json` oder Testfixtures. Verzeichnisantworten werden nur im Arbeitsspeicher gehalten; kein persistenter Daten-Cache. Alte `laverda:places:*`-Caches werden entfernt. Favoriten enthalten nur IDs und bleiben lokal. Bereits erhaltene/kopierte Informationen lassen sich nicht nachträglich geheim machen. Das gemeinsame Passwort bietet keine individuelle Mitgliederverwaltung; für getrennte Sperrung einzelner Mitglieder wären persönliche Konten erforderlich.
 
-`../api/places.json` is the authoritative import seed. Generate the public-only,
-uniquely identified fallback after editing it:
+HTTPS ist in produktiven Builds erforderlich. Klartext-HTTP dient nur der lokalen Entwicklung. Beim Android-USB-Test werden API und Metro mit `adb reverse tcp:8080 tcp:8080` und `adb reverse tcp:8081 tcp:8081` erreicht; die API-Origin ist dann `http://127.0.0.1:8080`. Der Entwicklungsserver bleibt ein separates Werkzeug.
 
-```powershell
-npm run data:generate
-npm run data:check
+## Kontakt und Eintragsvorschläge
+
+Das Formular erfasst Absendername/-mail, Typ, Name, Beschreibung, Adresse, Land, Website, Tags, optionale Koordinaten samt Genauigkeit/Quelle, Navigationslink, Kategorie, Linktyp, Priorität und Prüfdatum. Eingaben werden vor dem Entwurf validiert; Koordinaten benötigen ein vollständiges gültiges Paar, URLs dürfen nur HTTP(S) enthalten.
+
+MailComposer öffnet die Mail-App mit Betreff, Text und einem UTF-8-JSON-Anhang `{"entries":[...]}`. Nutzer prüfen und senden den Entwurf selbst. Android bestätigt keine Zustellung; die App meldet deshalb nur das Öffnen des Entwurfs. Bei fehlender Mail-App bleiben Vorschau und auswählbarer JSON-Text verfügbar. Der JSON-Anhang enthält keine Absenderdaten; diese stehen ausschliesslich im Mailtext. Temporäre Anhänge im App-Cache werden bei weiteren Entwürfen nach 24 Stunden bereinigt.
+
+Vorschläge beginnen mit `visibility=hidden`, `status=pending` und `verified=false`. Die Redaktion prüft alle Inhalte, setzt den gewünschten Freigabestatus und übernimmt sie erst dann in `api/places.json`. Keine direkte Schreibberechtigung der App auf Orte oder Datenbank.
+
+## Struktur
+
+```text
+src/app/               Provider und Navigation
+src/features/auth/     Anmeldung, geschützte Sitzung und Zugangssperre
+src/features/places/   DTO-Schema, Datenabruf, Karte, Liste, Details und Favoriten
+src/features/club/     Clubseite, Kontakt und Vorschlagsformular
+src/features/resources/ Online-Verzeichnis
+src/shared/            HTTP-Client, Designsystem und sichere Links
+tests/fixtures/        Nur Testdaten; kein Runtime-Import
 ```
 
-Commit the generated snapshot alongside seed changes. Do not edit it manually.
-The allocation of the one duplicate source ID matches PHP's collision-safe
-importer. Keep duplicate source order stable; changing IDs requires an explicit
-migration because bookmarks use IDs. The runtime API reads MariaDB, not JSON.
-
-## Behaviour and privacy
-
-- Explore shares search/categories between Map and List. Only actual/approximate
-  destinations appear as pins; online and country-only entries remain in List.
-- Saved filters all types, including blogs saved in Resources.
-- Near me requests foreground permission only after a tap. It uses straight-line
-  distance, keeps coordinates only in memory, and never sends them to the API.
-  No background-location permission or tracking is enabled.
-- AsyncStorage keeps versioned, tenant/API-scoped public data and tenant-scoped
-  bookmarks. It is unencrypted and must never contain secrets or private data.
-- TanStack Query handles cancellation, freshness, one bounded retry, foreground
-  refetch and connectivity recovery. Invalid responses do not replace good data.
-- Offline data does not imply offline map tiles, websites or route guidance.
-- Website links use the platform browser; directions use the maps/browser handler.
-- Membership/private content is not implemented. Add real server authentication
-  and an offline/privacy policy before introducing confidential data.
-
-## Checks
+## Prüfungen
 
 ```powershell
 npm run verify
 npm run format:check
 npx expo install --check
-npx expo-doctor
 npx expo export --platform android --platform ios
-# With a running, freshly seeded local PHP API:
-$env:LAVERDA_TEST_API_URL = "http://127.0.0.1:8080"
-npm test
-# Installed Maestro + running emulator/device + installed app:
-maestro test -e APP_ID=com.anonymous.laverdamap .maestro/directory.yaml
 ```
 
-The live API test explicitly skips if LAVERDA_TEST_API_URL is absent. Component
-tests mock native maps/sheets/location; they do not prove native gestures,
-permissions or external browser behaviour. Maestro is a local development tool,
-not a runtime dependency. Run the flow against a disposable test installation;
-it clears that installation's data.
+`npm run data:generate` erzeugt die Testfixture aus `api/places.json`; `data:check` prüft die Übereinstimmung. Für den optionalen Live-Vertragstest müssen `LAVERDA_TEST_API_URL` und ein kurzlebiges `LAVERDA_TEST_TOKEN` für eine frisch importierte Testdatenbank gesetzt sein. Geheimnisse nicht in Befehlsargumente oder Git schreiben. Komponentenprüfungen mocken native Module; echte Maps-, SecureStore- und Mail-Interaktion muss auf einem Gerät geprüft werden. Der Maestro-Smoke-Test verwendet einen vorbereiteten Testzugang und löscht den Zustand der Testinstallation.
 
-CI checks types, lint, snapshot drift, tests, formatting and Android/iOS bundles.
-No Node server is used in production; Metro/web tooling is development-only.
-See the root IMPLEMENTATION.md for checks actually executed and release caveats.
-
-## Design
-
-Light, warm surfaces, charcoal text and a deep orange accent are shared tokens.
-Category colours indicate meaning, not card position. Buttons and icon controls
-have minimum 44–48 point targets. Navigation reserves safe-area and scaled-label
-space. Dark mode, marker clustering, pagination and a global state framework are
-deliberately not added without a concrete need.
-
-The cleaner follow-up uses compact screen headers, borderless cards, subdued
-filters and one prominent action per detail sheet. Dates and fuller descriptions
-remain in details rather than being repeated in every list card. Resources has
-its own search/category controls; empty filtered lists offer a one-tap reset.
-Search accepts combined terms, country names and unaccented spelling. Builds
-without a configured native map open in List view, with an explicit return-to-list
-action if Map is selected. Offline cache and bookmark reads recover independently.
-Country names include a small native fallback; the tests require it to cover all
-countries in the seed, including on engines without `Intl.DisplayNames`.
+Sicherheitsstand der npm-Abhängigkeiten am 18.11.2026: kompatible Updates für `shell-quote` und `zod` sind enthalten. `npm audit` meldet weiterhin 6 moderate und 62 hohe Meldungen im Abhängigkeitsbaum, keine kritische. Die angebotenen umfassenden Fixes enthalten inkompatible Expo-/React-Native-Downgrades; diese wurden nicht erzwungen. Vor einer Veröffentlichung erneut prüfen und mit einem unterstützten SDK-Upgrade abarbeiten. Erfolgreiche Funktionstests bedeuten keinen vollständig bereinigten Sicherheits-Audit.
