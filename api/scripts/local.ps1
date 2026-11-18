@@ -246,6 +246,7 @@ function Test-LocalStack {
     Invoke-LocalPhpFile 'tests\unit.php'
     Invoke-LocalPhpFile 'tests\config.php'
     Invoke-LocalPhpFile 'tests\password.php'
+    Invoke-LocalPhpFile 'tests\health.php'
     [void](Invoke-LocalControl 'check-readonly' 'Runtime')
     Write-Host 'PASS API account cannot write to places'
     foreach ($suite in @('integration', 'upgrade')) {

@@ -69,10 +69,10 @@ function setClubPassword(string $slug, #[\SensitiveParameter] string $password):
 }
 
 /** @return array{status: int, body: mixed, headers: string} */
-function request(string $path, string $method = 'GET', ?string $body = null, ?string $origin = null, ?string $etag = null): array
+function request(string $path, string $method = 'GET', ?string $body = null, ?string $origin = null, ?string $etag = null, string $accept = 'application/json'): array
 {
     global $baseUrl, $bearer;
-    $headers = ['Accept: application/json'];
+    $headers = ['Accept: ' . $accept];
     if (!empty($bearer)) { $headers[] = 'Authorization: Bearer ' . $bearer; }
     if ($body !== null) {
         $headers[] = 'Content-Type: application/json';
@@ -92,9 +92,10 @@ function request(string $path, string $method = 'GET', ?string $body = null, ?st
         throw new RuntimeException('HTTP request failed: ' . $path);
     }
     preg_match('/\s(\d{3})\s/', $http_response_header[0], $match);
+    $isHtml = preg_match('/^Content-Type:\s*text\/html/im', implode("\n", $http_response_header)) === 1;
     return [
         'status' => (int) $match[1],
-        'body' => $response === '' ? null : json_decode($response, true, flags: JSON_THROW_ON_ERROR),
+        'body' => $response === '' ? null : ($isHtml ? $response : json_decode($response, true, flags: JSON_THROW_ON_ERROR)),
         'headers' => implode("\n", $http_response_header),
     ];
 }
@@ -168,6 +169,24 @@ try {
         usleep(100000);
     }
     check(request('/health')['status'] === 200, 'health ready');
+    $health = request('/health');
+    check($health['body']['status'] === 'Healthy', 'compatible health status field');
+    check(array_keys($health['body']['checks']) === ['api', 'database', 'directory', 'authentication'], 'detailed readiness checks');
+    check(count(array_filter($health['body']['checks'], fn (array $item): bool => $item['status'] === 'pass')) === 4, 'all components ready');
+    check(is_numeric($health['body']['durationMs']) && $health['body']['durationMs'] >= 0, 'health measures actual elapsed time');
+    check(str_contains($health['headers'], 'Vary: Accept'), 'health varies by Accept');
+    check(str_contains($health['headers'], 'Cache-Control: no-store'), 'health is never cached');
+    $page = request('/health', accept: 'text/html,application/xhtml+xml,*/*;q=0.8');
+    check($page['status'] === 200 && str_contains($page['body'], 'Alle Systeme bereit'), 'browser receives status dashboard');
+    check(str_contains($page['headers'], 'Content-Security-Policy:') && str_contains($page['headers'], "frame-ancestors 'none'"), 'dashboard content security policy');
+    preg_match('/script-src \'nonce-([^\']+)\'/', $page['headers'], $policyNonce);
+    check(isset($policyNonce[1]) && substr_count($page['body'], 'nonce="' . $policyNonce[1] . '"') === 3, 'inline CSS and scripts use the response nonce');
+    check(request('/health?format=json', accept: 'text/html')['body']['status'] === 'Healthy', 'explicit JSON in a browser');
+    check(str_contains(request('/health?format=html')['body'], 'Alle Systeme bereit'), 'explicit HTML view');
+    $publicHealth = json_encode($health['body']);
+    foreach ([$password, Config::database()['name'], 'access_password_hash', 'token_hash', 'entries'] as $privateValue) {
+        check(!str_contains($publicHealth, $privateValue), 'health excludes protected values and internal details');
+    }
     $bearer = '';
     check(request('/api/places')['status'] === 401, 'anonymous legacy data blocked');
     check(request('/api/v1/tenants/laverda/places')['status'] === 401, 'anonymous versioned data blocked');
@@ -289,15 +308,28 @@ try {
     check(request('/api/v1/tenants/laverda/auth/login', 'POST', '{"password":"wrong"}')['status'] === 429, 'persistent rate limiting');
     $pdo->exec('DELETE FROM auth_login_limits');
     echo "PASS auth revocation, expiry, password rotation and rate limits\n";
+    $pdo->exec('RENAME TABLE auth_sessions TO auth_sessions_test_unavailable');
+    try {
+        $authFailure = request('/health');
+        check($authFailure['status'] === 503 && $authFailure['body']['checks']['authentication']['status'] === 'fail', 'health detects unavailable authentication schema');
+        check($authFailure['body']['checks']['directory']['status'] === 'pass', 'independent directory probe remains accurate');
+        $authPage = request('/health', accept: 'text/html');
+        check($authPage['status'] === 503 && str_contains($authPage['body'], 'Dienst eingeschränkt'), 'browser outage page uses HTTP 503');
+        check(!str_contains($authPage['body'], 'auth_sessions_test_unavailable'), 'outage page hides SQL diagnostics');
+    } finally {
+        $pdo->exec('RENAME TABLE auth_sessions_test_unavailable TO auth_sessions');
+    }
     $pdo->exec('RENAME TABLE places TO places_test_unavailable');
     try {
         check(request('/health')['status'] === 503, 'health fails on missing schema');
+        check(request('/health')['body']['checks']['directory']['status'] === 'fail', 'directory probe identifies unavailable catalogue');
         $failure = request('/api/places');
         check($failure['status'] === 500 && $failure['body'] === ['error' => 'internal_server_error'], 'production-safe internal error');
     } finally {
         $pdo->exec('RENAME TABLE places_test_unavailable TO places');
     }
     check(request('/health')['status'] === 200, 'health recovers');
+    check(str_contains(request('/health', accept: 'text/html')['body'], 'Alle Systeme bereit'), 'browser dashboard recovers');
     echo "PASS unlock, CORS, schema readiness, safe errors\n";
     echo "PASS {$checks} assertions (PHP " . PHP_VERSION . "; MariaDB " . $pdo->getAttribute(PDO::ATTR_SERVER_VERSION) . ")\n";
 } finally {
