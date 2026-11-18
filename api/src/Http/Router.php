@@ -17,13 +17,17 @@ final class Router
         $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         $path = is_string($requestPath) ? '/' . trim($requestPath, '/') : '/';
 
+        if (preg_match('#^/api/v1/tenants/([^/]+)/auth/(login|session|logout)$#', $path, $auth) === 1) {
+            AuthHandler::handle(rawurldecode($auth[1]), $auth[2]);
+        }
+
         if ($path === '/auth/unlock') {
             if ($method !== 'POST') {
                 header('Allow: POST, OPTIONS');
                 JsonResponse::send(['error' => 'method_not_allowed'], 405);
             }
 
-            UnlockHandler::handle();
+            AuthHandler::handle('laverda', 'login');
         }
 
         if ($method !== 'GET') {
@@ -57,6 +61,7 @@ final class Router
         }
 
 
+        AuthHandler::requireSession($tenantSlug);
         PlacesHandler::handle($tenantSlug, $placeId, $isCollection);
     }
 }

@@ -23,7 +23,7 @@ final class Cors
         }
 
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-        header('Access-Control-Allow-Headers: Accept, Content-Type, If-None-Match');
+        header('Access-Control-Allow-Headers: Accept, Content-Type, If-None-Match, Authorization');
         header('Access-Control-Expose-Headers: ETag');
         header('Access-Control-Max-Age: 86400');
         header('X-Content-Type-Options: nosniff');

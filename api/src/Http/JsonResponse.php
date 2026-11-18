@@ -7,12 +7,13 @@ namespace LaverdaApi\Http;
 final class JsonResponse
 {
     /** @param array<string, mixed> $payload */
-    public static function publicData(array $payload): never
+    public static function protectedData(array $payload): never
     {
         $json = self::encode($payload);
         $etag = '"' . hash('sha256', $json) . '"';
         // Revalidate on every reuse: visibility and tenant state are checked first.
-        header('Cache-Control: public, no-cache');
+        header('Cache-Control: private, no-store');
+        header('Vary: Authorization', false);
         header('ETag: ' . $etag);
         header('Content-Type: application/json; charset=utf-8');
         $candidates = explode(',', $_SERVER['HTTP_IF_NONE_MATCH'] ?? '');

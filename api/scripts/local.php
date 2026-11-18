@@ -48,6 +48,14 @@ try {
                 $pdo->exec("GRANT $rights ON `$database`.* TO $account");
             }
             break;
+        case 'grant-auth':
+            if ($database !== 'api_laverda_local') {
+                throw new RuntimeException('Auth grants are restricted to the local application database.');
+            }
+            foreach (['auth_sessions', 'auth_login_limits'] as $table) {
+                $pdo->exec("GRANT SELECT, INSERT, UPDATE, DELETE ON `$database`.`$table` TO 'laverda_api_local'@'127.0.0.1'");
+            }
+            break;
         case 'create-test-database':
             if (!str_starts_with($database, 'laverda_test_')) {
                 throw new RuntimeException('A fresh laverda_test_* database is required.');

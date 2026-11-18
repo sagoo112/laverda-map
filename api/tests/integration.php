@@ -56,11 +56,24 @@ function importSeed(?string $file = null): array
     return ['code' => proc_close($process), 'stdout' => $stdout, 'stderr' => $stderr];
 }
 
+function setClubPassword(string $slug, #[\SensitiveParameter] string $password): int
+{
+    global $root;
+    $process = proc_open([PHP_BINARY, $root . '/scripts/set-password.php', $slug],
+        [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    if (!is_resource($process)) { throw new RuntimeException('Could not launch password setter.'); }
+    fwrite($pipes[0], $password . "\n" . $password . "\n"); fclose($pipes[0]);
+    stream_get_contents($pipes[1]); stream_get_contents($pipes[2]);
+    fclose($pipes[1]); fclose($pipes[2]);
+    return proc_close($process);
+}
+
 /** @return array{status: int, body: mixed, headers: string} */
 function request(string $path, string $method = 'GET', ?string $body = null, ?string $origin = null, ?string $etag = null): array
 {
-    global $baseUrl;
+    global $baseUrl, $bearer;
     $headers = ['Accept: application/json'];
+    if (!empty($bearer)) { $headers[] = 'Authorization: Bearer ' . $bearer; }
     if ($body !== null) {
         $headers[] = 'Content-Type: application/json';
     }
@@ -88,7 +101,7 @@ function request(string $path, string $method = 'GET', ?string $body = null, ?st
 
 try {
     $migrator = new LaverdaApi\Migrator($pdo, $root . '/database');
-    check(count($migrator->migrate()) === 2, 'all migrations applied');
+    check(count($migrator->migrate()) === 3, 'all migrations applied');
     check($migrator->migrate() === [], 'repeated migrations are no-op');
     check((int) $pdo->query('SELECT COUNT(*) FROM tenants')->fetchColumn() === 0, 'schema creation');
     $first = importSeed();
@@ -155,12 +168,24 @@ try {
         usleep(100000);
     }
     check(request('/health')['status'] === 200, 'health ready');
+    $bearer = '';
+    check(request('/api/places')['status'] === 401, 'anonymous legacy data blocked');
+    check(request('/api/v1/tenants/laverda/places')['status'] === 401, 'anonymous versioned data blocked');
+    check(request('/api/places/unknown', etag: '*')['status'] === 401, 'ETag cannot bypass authentication');
+    check(setClubPassword('laverda', $password) === 0, 'CLI creates a club password');
+    check(password_verify($password, $pdo->query("SELECT access_password_hash FROM tenants WHERE slug = 'laverda'")->fetchColumn()), 'database stores a verified password hash');
+    $login = request('/api/v1/tenants/laverda/auth/login', 'POST', json_encode(['password' => $password]));
+    check($login['status'] === 200, 'real login');
+    $bearer = $login['body']['token'];
+    check(strlen($bearer) === 64, 'random session token');
+    check($pdo->query('SELECT token_hash FROM auth_sessions LIMIT 1')->fetchColumn() === hash('sha256', $bearer), 'only token hashes stored');
+    check(request('/api/v1/tenants/laverda/auth/session')['status'] === 200, 'session verification');
     $collection = request('/api/v1/tenants/laverda/places');
     check($collection['status'] === 200, 'versioned collection');
     preg_match('/ETag: (.+)/i', $collection['headers'], $etagMatch);
     $etag = trim($etagMatch[1]);
     check(request('/api/v1/tenants/laverda/places', etag: $etag)['status'] === 304, 'conditional collection response');
-    check(str_contains($collection['headers'], 'Cache-Control: public, no-cache'), 'public data revalidates');
+    check(str_contains($collection['headers'], 'Cache-Control: private, no-store'), 'public data revalidates');
     $entries = $collection['body']['entries'];
     check(count($entries) === 43, 'collection count');
     check(request('/api/places')['body'] === $collection['body'], 'legacy contract');
@@ -177,8 +202,8 @@ try {
     $id = rawurlencode($entries[0]['id']);
     check(request('/api/v1/tenants/laverda/places/' . $id)['body'] === $entries[0], 'detail contract');
     check(request('/api/places/' . $id)['body'] === $entries[0], 'legacy detail');
-    check(request('/api/v1/tenants/missing/places')['status'] === 404, 'unknown tenant collection');
-    check(request('/api/v1/tenants/missing/places/' . $id)['body']['error'] === 'tenant_not_found', 'unknown tenant detail');
+    check(request('/api/v1/tenants/missing/places')['status'] === 401, 'unknown tenant collection requires scoped session');
+    check(request('/api/v1/tenants/missing/places/' . $id)['status'] === 401, 'unknown tenant detail requires scoped session');
     check(request('/api/v1/tenants/laverda/places/missing')['body']['error'] === 'place_not_found', 'unknown ID');
     check(request('/missing')['status'] === 404, 'unknown route');
     check(request('/api/places', 'POST')['status'] === 405, 'unsupported method');
@@ -207,21 +232,27 @@ try {
     }
     $setVisibility->execute(['public', $tenant['id'], $entries[0]['id']]);
     $pdo->exec("UPDATE tenants SET is_active = 0 WHERE slug = 'laverda'");
-    check(request('/api/places')['status'] === 404, 'inactive tenant collection');
-    check(request('/api/places/' . $id)['status'] === 404, 'inactive tenant detail');
-    check(request('/api/places', etag: $etag)['status'] === 404, 'ETag never bypasses tenant visibility');
+    check(request('/api/places')['status'] === 401, 'inactive tenant collection');
+    check(request('/api/places/' . $id)['status'] === 401, 'inactive tenant detail');
+    check(request('/api/places', etag: $etag)['status'] === 401, 'ETag never bypasses tenant visibility');
     $pdo->exec("UPDATE tenants SET is_active = 1 WHERE slug = 'laverda'");
     $pdo->exec("INSERT INTO tenants (slug, name) VALUES ('other-club', 'Other club')");
     $otherId = $pdo->lastInsertId();
+    check(request('/api/v1/tenants/other-club/places')['status'] === 401, 'cross-tenant token denied');
+    $laverdaBearer = $bearer;
+    $pdo->prepare('UPDATE tenants SET access_password_hash = ? WHERE slug = ?')->execute([LaverdaApi\Auth\ClubAccess::passwordHash($password), 'other-club']);
+    $otherLogin = request('/api/v1/tenants/other-club/auth/login', 'POST', json_encode(['password' => $password]));
+    $bearer = $otherLogin['body']['token'];
     $other = $pdo->prepare('INSERT INTO places (tenant_id, id, name, visibility) VALUES (?, ?, ?, ?)');
     $other->execute([$otherId, $entries[0]['id'], 'Other tenant place', 'public']);
     check(count(request('/api/v1/tenants/other-club/places')['body']['entries']) === 1, 'other tenant collection');
     check(request('/api/v1/tenants/other-club/places/' . $id)['body']['name'] === 'Other tenant place', 'tenant isolation with shared ID');
-    check(request('/api/places/' . $id)['body'] === $entries[0], 'original tenant unaffected');
+    check(request('/api/places/' . $id)['status'] === 401, 'other tenant cannot read laverda');
     $other->execute([$otherId, 'CaseSensitive', 'Upper-case ID', 'public']);
     $other->execute([$otherId, 'casesensitive', 'Lower-case ID', 'public']);
     check(request('/api/v1/tenants/other-club/places/CaseSensitive')['body']['name'] === 'Upper-case ID', 'case-sensitive ID lookup');
     check(request('/api/v1/tenants/other-club/places/casesensitive')['body']['name'] === 'Lower-case ID', 'case-distinct IDs retained');
+    $bearer = $laverdaBearer;
     echo "PASS search/filter validation, public visibility, tenant isolation\n";
 
     check(request('/auth/unlock', 'POST', json_encode(['password' => $password]))['status'] === 200, 'correct password');
@@ -237,6 +268,27 @@ try {
     check(!str_contains($denied['headers'], 'Access-Control-Allow-Origin:'), 'unlisted CORS origin');
     check(str_contains($denied['headers'], 'Vary: Origin'), 'CORS varies on all requests');
 
+    $sessionToken = $bearer;
+    $logoutLogin = request('/api/v1/tenants/laverda/auth/login', 'POST', json_encode(['password' => $password]));
+    $bearer = $logoutLogin['body']['token'];
+    check(request('/api/v1/tenants/laverda/auth/logout', 'POST')['status'] === 200, 'logout');
+    check(request('/api/v1/tenants/laverda/auth/session')['status'] === 401, 'revoked token rejected');
+    $bearer = $sessionToken;
+    $pdo->prepare('UPDATE auth_sessions SET expires_at = 1 WHERE token_hash = ?')->execute([hash('sha256', $bearer)]);
+    check(request('/api/places')['status'] === 401, 'expired token rejected');
+    $fresh = request('/api/v1/tenants/laverda/auth/login', 'POST', json_encode(['password' => $password]));
+    $bearer = $fresh['body']['token'];
+    check(setClubPassword('laverda', $password) === 0, 'CLI password rotation succeeds');
+    check(request('/api/places')['status'] === 401, 'password version change invalidates sessions');
+    $fresh = request('/api/v1/tenants/laverda/auth/login', 'POST', json_encode(['password' => $password]));
+    $bearer = $fresh['body']['token'];
+    $pdo->exec('DELETE FROM auth_login_limits');
+    for ($n = 0; $n < 10; $n++) {
+        check(request('/api/v1/tenants/laverda/auth/login', 'POST', '{"password":"wrong"}')['status'] === 401, 'wrong password rejected');
+    }
+    check(request('/api/v1/tenants/laverda/auth/login', 'POST', '{"password":"wrong"}')['status'] === 429, 'persistent rate limiting');
+    $pdo->exec('DELETE FROM auth_login_limits');
+    echo "PASS auth revocation, expiry, password rotation and rate limits\n";
     $pdo->exec('RENAME TABLE places TO places_test_unavailable');
     try {
         check(request('/health')['status'] === 503, 'health fails on missing schema');

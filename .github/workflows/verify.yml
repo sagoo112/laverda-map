@@ -43,6 +43,7 @@ jobs:
       - run: find api -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php api/tests/unit.php
       - run: php api/tests/config.php
+      - run: php api/tests/password.php
       - run: sudo -E php api/tests/integration.php
       - run: |
           sudo mariadb -e 'CREATE DATABASE laverda_test_upgrade_ci CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'

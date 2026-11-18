@@ -11,8 +11,8 @@ if (!filter_var($base, FILTER_VALIDATE_URL) || !in_array(parse_url($base, PHP_UR
     fwrite(STDERR, "Usage: php scripts/check-deployment.php https://api.example.org\n");
     exit(1);
 }
-foreach (['/health' => 200, '/api/v1/tenants/laverda/places' => 200,
-    '/api/v1/tenants/unknown-deployment-check/places' => 404] as $path => $expected) {
+foreach (['/health' => 200, '/api/v1/tenants/laverda/places' => 401,
+    '/api/v1/tenants/unknown-deployment-check/places' => 401] as $path => $expected) {
     $context = stream_context_create(['http' => ['ignore_errors' => true, 'timeout' => 15]]);
     $body = file_get_contents($base . $path, false, $context);
     preg_match('/\\s(\\d{3})\\s/', $http_response_header[0] ?? '', $matches);
@@ -23,7 +23,7 @@ foreach (['/health' => 200, '/api/v1/tenants/laverda/places' => 200,
     if ($path === '/health' && ($json['status'] ?? null) !== 'Healthy') {
         throw new RuntimeException('API is not ready.');
     }
-    if (str_ends_with($path, '/laverda/places') && !is_array($json['entries'] ?? null)) {
+    if ($expected === 401 && ($json['error'] ?? null) !== 'unauthorized') {
         throw new RuntimeException('Invalid places contract.');
     }
     echo "PASS {$path} ({$expected})\n";

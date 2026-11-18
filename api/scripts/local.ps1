@@ -174,7 +174,10 @@ function Start-LocalStack {
     if (!$script:config.SeedImported) {
         Write-Host 'Creating the application database and separate import/read-only accounts...'
         [void](Invoke-LocalControl 'provision')
-        Use-LocalEnvironment 'Admin' 'api_laverda_local' { Invoke-LocalPhpFile 'scripts\migrate.php' }
+    }
+    Use-LocalEnvironment 'Admin' 'api_laverda_local' { Invoke-LocalPhpFile 'scripts\migrate.php' }
+    [void](Invoke-LocalControl 'grant-auth')
+    if (!$script:config.SeedImported) {
         Use-LocalEnvironment 'Import' 'api_laverda_local' { Invoke-LocalPhpFile 'scripts\import_places.php' }
         $script:config.SeedImported = $true
         Save-LocalSettings
@@ -215,6 +218,7 @@ function Test-LocalStack {
     Write-Host "PASS PHP syntax: $($sources.Count) files"
     Invoke-LocalPhpFile 'tests\unit.php'
     Invoke-LocalPhpFile 'tests\config.php'
+    Invoke-LocalPhpFile 'tests\password.php'
     [void](Invoke-LocalControl 'check-readonly' 'Runtime')
     Write-Host 'PASS API account cannot write to places'
     foreach ($suite in @('integration', 'upgrade')) {

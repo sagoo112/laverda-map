@@ -36,11 +36,6 @@ final class Config
         return self::optional('CORS_ALLOWED_ORIGIN', '*');
     }
 
-    public static function appPassword(): string
-    {
-        return self::required('APP_PASSWORD');
-    }
-
     private static function required(string $name, bool $allowEmpty = false): string
     {
         $value = self::value($name);

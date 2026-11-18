@@ -28,7 +28,7 @@ final class PlacesHandler
                 ], 404);
             }
 
-            JsonResponse::publicData(['entries' => $places]);
+            JsonResponse::protectedData(['entries' => $places]);
         }
 
         $place = $repository->findPublic($tenantSlug, (string) $placeId);
@@ -46,7 +46,7 @@ final class PlacesHandler
             ], 404);
         }
 
-        JsonResponse::publicData($place);
+        JsonResponse::protectedData($place);
 
 
     }
