@@ -14,6 +14,7 @@ api/
     index.php
     .htaccess               Routing und Weitergabe des Authorization-Headers
   src/Auth/                 Passwort- und Sitzungsprüfung
+  src/Health/               Statusprüfungen und Browser-Dashboard (inkl. CSS/JS)
   src/Http/                 Routing, HTTP-Handler, CORS und Antworten
   src/Places/               DTO, Repository, Import und Validierung
   database/schema.sql       Basisschema
@@ -32,13 +33,13 @@ Nur `public/` veröffentlichen. Quellcode, JSON, SQL, Skripte und private Konfig
 
 Auflösung pro Wert: Prozessumgebung → gleichnamige `$_SERVER`-Variable → private `api/config.local.php`. HTTP-Header sind keine Konfiguration. Explizite leere Umgebungswerte werden nicht durch Dateiinhalte ersetzt.
 
-| Variable | Bedeutung |
-|---|---|
-| `DB_HOST` | Datenbankserver, z. B. `localhost` |
-| `DB_PORT` | Separater Port, z. B. `3306` |
-| `DB_NAME` | z. B. `api_laverda` |
-| `DB_USER` | Datenbankbenutzer, nicht automatisch der FTP-Benutzer |
-| `DB_PASSWORD` | Datenbankpasswort, niemals ins Repository schreiben |
+| Variable              | Bedeutung                                                 |
+| --------------------- | --------------------------------------------------------- |
+| `DB_HOST`             | Datenbankserver, z. B. `localhost`                        |
+| `DB_PORT`             | Separater Port, z. B. `3306`                              |
+| `DB_NAME`             | z. B. `api_laverda`                                       |
+| `DB_USER`             | Datenbankbenutzer, nicht automatisch der FTP-Benutzer     |
+| `DB_PASSWORD`         | Datenbankpasswort, niemals ins Repository schreiben       |
 | `CORS_ALLOWED_ORIGIN` | Optional `*` oder eine genaue Web-Origin; keine Anmeldung |
 
 Wenn Plesk keine Servervariablen zulässt, `config.example.php` serverseitig nach `config.local.php` kopieren und bearbeiten. Alle Werte sind PHP-Strings in einfachen Anführungszeichen; Apostroph als `\'`, Backslash als `\\` schreiben. Datei niemals in `public/` ablegen. Wo passend Rechte `600` setzen, sofern PHP als Dateieigentümer läuft; andernfalls dem tatsächlichen PHP-Benutzer gezielt Leserechte geben. Kein `777`. Die private Datei bei Updates erhalten und private Backups verwenden. Die API lädt keine `.env`-Datei.
@@ -70,6 +71,8 @@ Auf Hosttech können diese beiden CLI-Dateien über einmalige Plesk-Aufgaben vom
 
 ## Clubpasswort einrichten
 
+Für die bereits gestartete lokale Windows-Umgebung genügt aus dem Projektstamm `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 SetPassword`. Der Helfer fragt verdeckt zweimal nach der Passphrase und verwendet ausschliesslich die lokale Datenbank. Er startet keine Dienste. Die folgenden CLI-/SQL-Varianten sind für separat konfigurierte Datenbankverbindungen beziehungsweise Hosttech gedacht.
+
 Nach Migration UND Import gibt es den Tenant `laverda`, zunächst ohne Zugangspasswort. Ohne eingerichteten Hash bleibt der Zugang gesperrt; es gibt kein Standardpasswort.
 
 Mit CLI-Zugang:
@@ -88,20 +91,30 @@ Er startet keinen Server, fragt verdeckt nach der Passphrase und schreibt `.loca
 
 ## Endpunkte
 
-| Methode / Pfad | Zugriff |
-|---|---|
-| `GET /health` | Öffentlich; prüft Datenbank und Tabellenzugriff, keine Zugangsdaten |
-| `POST /api/v1/tenants/laverda/auth/login` | JSON `{"password":"…"}`; gibt Token, Tenant und `expiresAt` zurück |
-| `GET /api/v1/tenants/laverda/auth/session` | Bearer-Token; prüft die bestehende Sitzung |
-| `POST /api/v1/tenants/laverda/auth/logout` | Bearer-Token; widerruft diese Sitzung |
-| `GET /api/v1/tenants/laverda/places` | Bearer-Token für genau diesen aktiven Tenant |
-| `GET /api/v1/tenants/laverda/places/{id}` | Gleicher Schutz |
+| Methode / Pfad                             | Zugriff                                                            |
+| ------------------------------------------ | ------------------------------------------------------------------ |
+| `GET /health`                              | Öffentlich; Status-Dashboard im Browser, JSON für API-Clients      |
+| `POST /api/v1/tenants/laverda/auth/login`  | JSON `{"password":"…"}`; gibt Token, Tenant und `expiresAt` zurück |
+| `GET /api/v1/tenants/laverda/auth/session` | Bearer-Token; prüft die bestehende Sitzung                         |
+| `POST /api/v1/tenants/laverda/auth/logout` | Bearer-Token; widerruft diese Sitzung                              |
+| `GET /api/v1/tenants/laverda/places`       | Bearer-Token für genau diesen aktiven Tenant                       |
+| `GET /api/v1/tenants/laverda/places/{id}`  | Gleicher Schutz                                                    |
 
 Alte `/api/places`-Routen sind ebenfalls geschützt. `/auth/unlock` ist nur ein Alias für den echten Login, keine ungeschützte Freischaltung. Alte App-Builds ohne Token-Unterstützung benötigen ein Update.
 
 Der Ortsvertrag bleibt gleich. Filter `type`, `country`, `q` bleiben erhalten, Reihenfolge bleibt deterministisch. Nur `visibility=public` wird im authentifizierten Verzeichnis angezeigt; hidden/private/null bleiben ausgeschlossen. Ohne/mit ungültiger, abgelaufener, widerrufener oder fremdem Tenant zugeordneter Sitzung: HTTP 401. Mit gültiger Sitzung unbekannte/nonpublic Orts-ID: 404. Fehlerhafte Eingaben: 400, zu grosser Login-Body: 413, falsche Methode: 405, Versuchslimit: 429.
 
 Login auf nichtlokalen Verbindungen verlangt HTTPS. Token bestehen aus 32 zufälligen Bytes und gelten maximal 24 Stunden; der Server speichert nur deren SHA-256. Zehn Anmeldeversuche je IP/Tenant in 15 Minuten, dann begrenzte Sperre; erfolgreiche Anmeldung setzt den Zähler zurück. Passwortwechsel und Tenant-Deaktivierung sperren bestehende Sitzungen. Geschützte Antworten sind `private, no-store`; ETags umgehen die Auth-Prüfung nicht. Proxy-/Webserver müssen den Authorization-Header erhalten. Bestehende veröffentlichte Daten oder alte Client-Kopien können nicht zurückgerufen werden.
+
+## Statusseite und Monitoring
+
+`/health` liefert bei einer Browser-Anfrage mit `Accept: text/html` eine responsive Statusseite. `?format=html` wählt sie ausdrücklich aus. Für Skripte bleibt JSON der Standard; `Accept: application/json` oder `/health?format=json` erzwingt JSON auch im Browser. Beide Darstellungen verwenden denselben Prüfbericht und liefern bei Bereitschaft HTTP 200, bei einer fehlgeschlagenen Prüfung HTTP 503. `Vary: Accept` und `Cache-Control: no-store` verhindern die Wiederverwendung einer falschen oder veralteten Darstellung.
+
+Die JSON-Antwort behält `status: Healthy|Unhealthy` und ergänzt `service`, `apiVersion`, `checkedAt` (UTC), `durationMs` und vier `checks`: API-Anfrage, DB-Verbindung, Orts-/Tenant-Tabellen und Anmeldungstabellen. Komponenten haben `pass`, `fail` oder `skipped`. Ohne DB-Verbindung werden nachgelagerte Prüfungen übersprungen. Es werden keine Zugangsdaten, Server-/PHP-/DB-Versionen, DB-Namen, SQL-Fehler, Tokens oder Orts-/Mitgliederzahlen ausgegeben.
+
+Die Browser-Seite aktualisiert bei sichtbarem Tab alle 60 Sekunden; ein Schalter pausiert dies. „Jetzt prüfen“ funktioniert auch manuell. Bei nicht erreichbarem Server wird der Status ausdrücklich als unbekannt markiert, statt eine alte grüne Anzeige beizubehalten. Die Seite prüft Tabellenzugriff, kein tatsächlich gesetztes Clubpasswort, keine redaktionellen Inhalte und keine Maps-/Mail-Funktion. Uptime-Prozente oder historische Verläufe werden nicht behauptet.
+
+Die Darstellung benötigt keine zusätzlichen Pakete, externen Schriftarten oder CDNs. CSS und JavaScript unter `src/Health/` werden mit einem CSP-Nonce eingebettet, damit dieselbe Seite unter lokalem PHP-Router und Apache/Plesk läuft. Bei FTP-Updates den **gesamten Ordner `src/Health/`** und `src/Http/HealthHandler.php` übertragen; nur `public/` bleibt der Dokumentenstamm. Dafür ist kein neuer App-Build nötig.
 
 ## Produktionsrechte
 
@@ -128,10 +141,13 @@ Kein Mailanhang wird automatisch importiert. Ein erneuter Import kann manuelle D
 
 ## Tests und Betrieb
 
+Die vollständige lokale Schritt-für-Schritt-Anleitung mit Start/Stop, sicherer Passworteingabe, angemeldeten HTTP-Aufrufen und den Testbefehlen steht in [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md).
+
 ```powershell
 php api/tests/unit.php
 php api/tests/config.php
 php api/tests/password.php
+php api/tests/health.php
 # Nur frische isolierte Datenbanken namens laverda_test_*:
 php api/tests/integration.php
 php api/tests/upgrade.php

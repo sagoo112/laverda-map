@@ -1,5 +1,11 @@
 # Lokale API mit MariaDB unter Windows
 
+Schritt-für-Schritt-Anleitung für PowerShell. Die API hat keinen separaten
+Kompilier-/Build-Schritt: PHP führt den Quellcode aus. Der lokale Ablauf ist
+**MariaDB starten → Migrationen → Datenimport → PHP-Server → Tests**.
+App-Builds sind in der [App-Anleitung](../app/LOCAL-DEVELOPMENT.md) erklärt.
+Diese Dokumentation startet selbst keine Dienste; Befehle ohne `PS ...>` kopieren.
+
 Die lokale Umgebung verwendet denselben PHP-Code und dieselben Migrationen wie
 Hosttech. Die Expo-App wird dafür nicht benötigt. Der Helfer installiert keinen
 Windows-Dienst und startet keine Programme automatisch beim Anmelden.
@@ -23,13 +29,19 @@ Beim ersten Start initialisiert der Helfer eine eigene MariaDB-Instanz, erstellt
 Import wird dabei nicht automatisch wiederholt, damit spätere lokale
 Datenbankänderungen nicht unbemerkt überschrieben werden.
 
+Neue Migrationen werden auch bei späteren Starts angewendet und die benötigten
+Rechte der Auth-Tabellen vergeben. `schema.sql` allein ist nicht das vollständige
+aktuelle Schema: Es gehören `tenants`, `places`, `schema_migrations`,
+`auth_sessions` und `auth_login_limits` dazu. Die Quelle `places.json` wird bei
+HTTP-Anfragen nicht gelesen.
+
 Die Prozesse laufen im Hintergrund. Du kannst das aufrufende PowerShell-Fenster
 nach Abschluss schliessen. Es gibt nur folgende lokale Netzwerkadressen:
 
-| Bestandteil | Adresse | Aufgabe |
-|---|---|---|
-| PHP-API | http://127.0.0.1:8080 | Empfängt HTTP-Anfragen und antwortet mit JSON |
-| MariaDB | 127.0.0.1:3307 | Speichert und durchsucht die Daten |
+| Bestandteil | Adresse               | Aufgabe                                       |
+| ----------- | --------------------- | --------------------------------------------- |
+| PHP-API     | http://127.0.0.1:8080 | Empfängt HTTP-Anfragen und antwortet mit JSON |
+| MariaDB     | 127.0.0.1:3307        | Speichert und durchsucht die Daten            |
 
 `127.0.0.1` bezeichnet deinen Computer. Beide Server lauschen ausschliesslich auf
 dieser Adresse. Der Browser fragt die API an; PHP greift über PDO auf MariaDB zu.
@@ -37,15 +49,115 @@ Der PHP-Entwicklungsserver verwendet `api/public` als Dokumentenstamm und
 `api/public/index.php` als Router. Apache, `.htaccess`, HTTPS und Plesk werden lokal
 damit nicht getestet.
 
-## Im Browser prüfen
+## Clubpasswort einmalig setzen oder bewusst wechseln
 
-- http://127.0.0.1:8080/health liefert `{"status":"Healthy"}`.
-- http://127.0.0.1:8080/api/v1/tenants/laverda/places liefert `{"entries":[...]}`.
-- http://127.0.0.1:8080/api/v1/tenants/laverda/places/www-laverdaclub-ch-82bbf1 liefert einen einzelnen Eintrag.
-- Ein unbekannter Tenant oder eine unbekannte Platz-ID liefert HTTP 404.
+Aus dem Projektstamm, nachdem `local.ps1 Start` API und MariaDB gestartet hat:
 
-`Healthy` bedeutet, dass PHP die Datenbank und beide Anwendungstabellen erreichen
-kann. Die Platzliste prüft zusätzlich, ob importierte Datensätze vorhanden sind.
+```powershell
+Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 SetPassword
+```
+
+Der Helfer fragt zweimal verdeckt nach dem neuen **lokalen Clubpasswort**.
+Mindestens 15, maximal 72 UTF-8-Bytes; Umlaute können mehr als ein Byte benötigen.
+Die UTF-8-Übergabe an PHP ist bereits im Skript enthalten. Das Passwort nicht
+als Befehlsargument übergeben, sondern nur in den Eingabeaufforderungen eingeben.
+
+**Was passiert:** Der Helfer prüft, dass seine eigene lokale MariaDB läuft, und
+ruft `scripts/set-password.php` mit den lokalen Administrations-Zugangsdaten auf.
+Er verwendet fest `127.0.0.1:3307`, `api_laverda_local` und den Tenant `laverda`;
+eine Hosttech-Konfiguration in `config.local.php` wird dabei nicht verwendet.
+PHP speichert den gesalzenen Hash und widerruft bisherige lokale Sitzungen.
+Erwartet: `Club password updated; existing sessions revoked.`
+
+`SetPassword` startet keine Dienste und richtet keine Datenbank neu ein. Ist die
+lokale Umgebung nicht initialisiert oder gestoppt, zuerst `local.ps1 Start`
+ausführen. Die vorher laufenden Dienste bleiben nach dem Passwortwechsel laufen;
+zum Tagesende mit `local.ps1 Stop` beenden.
+
+Das ist kein täglicher Startschritt. Die App muss sich nach einem Wechsel neu
+anmelden. Das Clubpasswort im Passwortmanager merken. DB-Passwörter werden von
+diesem Befehl nicht gewechselt.
+
+Für den späteren Hosttech-/phpMyAdmin-Weg gibt es separat `password-sql.ps1`.
+Es fragt ebenfalls verdeckt und erzeugt nur private SQL für den dortigen Import;
+es setzt weder das lokale noch das Produktionspasswort automatisch.
+
+## Health und Zugriffsschutz prüfen
+
+- http://127.0.0.1:8080/health zeigt im Browser die gestaltete Statusseite.
+- http://127.0.0.1:8080/health?format=json liefert JSON mit `status: Healthy`
+  sowie Prüfzeit, Dauer und den vier Komponentenprüfungen. Bei Fehlern: HTTP 503.
+- Ortsrouten liefern ohne Bearer-Token **HTTP 401**, `{"error":"unauthorized"}`.
+- Auch unbekannte Tenants liefern anonym 401; sie verraten keine Ortsdaten.
+
+Den vorhandenen Smoke-Test aus dem Projektstamm aufrufen:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/health
+& .\.local-tools\php\php.exe .\api\scripts\check-deployment.php http://127.0.0.1:8080
+```
+
+Erwartet: Health 200, Laverda-Ortsliste 401, unbekannter Tenant 401. `Healthy`
+prüft Verbindung und Lesezugriff auf Orts-/Auth-Tabellen. Es beweist weder ein
+gesetztes Clubpasswort noch importierte Datensätze. Zum Datenabruf anmelden.
+
+Die Statusseite aktualisiert in sichtbaren Tabs alle 60 Sekunden und per „Jetzt
+prüfen“. Die Automatik lässt sich abschalten. Nach dem Stoppen der lokalen API
+wird beim nächsten Prüfen „Status nicht erreichbar“ angezeigt. Dies ist eine
+Momentaufnahme ohne historische Verfügbarkeit; Zugangsdaten und interne
+Serverdetails werden nicht angezeigt.
+
+## Anmelden und echte MariaDB-Daten abrufen
+
+Diese Blöcke im selben PowerShell-Fenster ausführen. Das vorher eingerichtete
+lokale Clubpasswort verdeckt eingeben; das Token wird nicht ausgegeben:
+
+```powershell
+$localApi = 'http://127.0.0.1:8080'
+$clubSecret = Read-Host 'Lokales Clubpasswort' -AsSecureString
+try {
+    $clubPlain = ([pscredential]::new('club', $clubSecret)).GetNetworkCredential().Password
+    $loginBody = @{ password = $clubPlain } | ConvertTo-Json -Compress
+    $localLogin = Invoke-RestMethod -Method Post -Uri "$localApi/api/v1/tenants/laverda/auth/login" -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($loginBody))
+    $localHeaders = @{ Authorization = 'Bearer ' + $localLogin.token }
+    Write-Host ('Angemeldet bis: ' + $localLogin.expiresAt)
+} finally {
+    $clubSecret.Dispose()
+    Remove-Variable clubPlain, loginBody -ErrorAction SilentlyContinue
+}
+```
+
+Falsches Passwort: 401. Zu viele Versuche: 429, dann abwarten. Token gelten
+maximal 24 Stunden und sind Zugangsnachweise; nicht teilen oder in Dateien
+kopieren. Jetzt Liste, einen Ort und die Sitzung abrufen:
+
+```powershell
+$directory = Invoke-RestMethod -Uri "$localApi/api/v1/tenants/laverda/places" -Headers $localHeaders
+Write-Host ('Sichtbare Orte: ' + $directory.entries.Count)
+if ($directory.entries.Count -gt 0) {
+    $placeId = [Uri]::EscapeDataString($directory.entries[0].id)
+    Invoke-RestMethod -Uri "$localApi/api/v1/tenants/laverda/places/$placeId" -Headers $localHeaders
+}
+Invoke-RestMethod -Uri "$localApi/api/v1/tenants/laverda/auth/session" -Headers $localHeaders
+```
+
+Die API liest MariaDB, nicht die JSON-Datei. Die Quelle enthält 43 Einträge; nur
+`visibility=public` erscheint im angemeldeten Verzeichnis. Die sichtbare Anzahl
+kann daher von der Zahl aller DB-Zeilen abweichen. Der Listenvertrag lautet
+`{"entries":[...]}`, ein Detailaufruf liefert direkt ein Ortsobjekt.
+
+Mit gültiger Laverda-Sitzung: unbekannte oder nicht öffentliche Orts-ID 404;
+Zugriff auf einen anderen Tenant 401. Die Integrationssuite prüft diese Fälle.
+Nach dem manuellen Test abmelden:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "$localApi/api/v1/tenants/laverda/auth/logout" -Headers $localHeaders
+Remove-Variable localLogin, localHeaders, directory -ErrorAction SilentlyContinue
+```
+
+Das widerruft diese Test-Sitzung. Die Handy-App hat eine eigene Sitzung und
+bleibt davon unabhängig.
 
 ## Status, Stoppen und erneut Starten
 
@@ -64,18 +176,57 @@ erlaubt. Belegte Ports anderer Programme führen zu einer Fehlermeldung.
 
 ## Automatische Tests
 
+Reine Tests ohne laufende API oder Datenbank, aus dem Projektstamm:
+
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Test
+& .\.local-tools\php\php.exe .\api\tests\unit.php
+& .\.local-tools\php\php.exe .\api\tests\config.php
+& .\.local-tools\php\php.exe .\api\tests\password.php
+& .\.local-tools\php\php.exe .\api\tests\health.php
 ```
 
-Der Befehl startet die Umgebung bei Bedarf und prüft PHP-Syntax, Importvalidierung,
-die Leserechte des API-Benutzers, die vorhandene Integrationssuite, das Upgrade
-einer bereits befüllten Datenbank sowie die laufenden HTTP-Endpunkte.
+Diese prüfen Importvalidierung, Konfigurationsauflösung, Passwortrichtlinie,
+Hashes und private SQL-Erzeugung. Der Konfigurationstest startet kurzlebige
+PHP-Unterprozesse, aber keinen dauerhaften Server.
+
+Der Health-Test prüft HTML-/JSON-Auswahl und sichere Ausgabe ohne DB-Zugriff.
+Die Integrationssuite prüft zusätzlich echte Tabellenzugriffe, HTML/JSON mit
+200/503, fehlende Auth-/Ortstabellen, Wiederherstellung und Schutz vor der
+Ausgabe interner Daten.
+
+Vollständiger Test mit Datenbank und anschliessendem Stopp:
+
+```powershell
+try {
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Test
+    if ($LASTEXITCODE -ne 0) { throw 'API-Testlauf fehlgeschlagen.' }
+} finally {
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Stop
+}
+```
+
+`Test` startet die Umgebung und wendet gegebenenfalls neue Migrationen an. Es
+prüft PHP-Syntax, reine Tests, fehlende Orts-Schreibrechte des API-Benutzers,
+Import, Authentifizierung, Sitzungen, Tenant-Isolation, Antwortvertrag und das
+Upgrade einer bereits befüllten Datenbank. Danach folgt der anonyme Smoke-Test.
 
 Integration und Upgrade bekommen bei jedem Aufruf eigene neue Datenbanken namens
-`laverda_test_*`. Ihre Testdaten aendern `api_laverda_local` nicht. Die Testdatenbanken
-bleiben für eine mögliche Untersuchung erhalten; wiederholte Testläufe belegen
-daher zusätzlichen lokalen Speicher. Die Server bleiben anschliessend gestartet.
+`laverda_test_*` auf der lokalen MariaDB-Instanz. Deren Fixture-Schreibvorgänge
+ändern die Ortsdaten von `api_laverda_local` nicht. Beim ersten Start wird die
+Entwicklungsdatenbank aber regulär eingerichtet; spätere Starts wenden neue
+Migrationen auch dort an. Dies ist keine vollständig separate MariaDB-Instanz.
+Integrationstests niemals mit Produktions-Zugangsdaten ausführen.
+
+Testdatenbanken bleiben für Untersuchungen erhalten und belegen bei Wiederholung
+zusätzlichen Speicher. `Test` allein lässt die Server gestartet. Der obige
+`finally`-Block stoppt sie auch bei Fehlern. Zum anschliessenden Arbeiten am Handy
+stattdessen `local.ps1 Test` ohne diesen Stop-Block verwenden und später stoppen.
+
+Optional, falls `.local-tools/phpstan.phar` vorhanden ist:
+
+```powershell
+& .\.local-tools\php\php.exe .\.local-tools\phpstan.phar analyse -c api/phpstan.neon --memory-limit=512M
+```
 
 ## Daten bewusst erneut importieren
 
@@ -85,7 +236,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Impo
 
 Dies führt Migrationen und den Import erneut aus. Wiederholte Imports erzeugen
 keine Duplikate, ersetzen aber die importierten Felder durch Werte aus der
-JSON-Datei. Deshalb ist der Import ein eigener ausdrücklicher Befehl.
+JSON-Datei. Manuelle DB-Änderungen können so überschrieben werden. Entfernte
+JSON-Einträge werden nicht automatisch gelöscht; Clubpasswort und Aktivierung
+werden nicht zurückgesetzt. Deshalb ist der Import ein eigener ausdrücklicher
+Befehl. Die Server bleiben danach gestartet.
+
+Testfixture der App bei geänderter Quelle anpassen, falls gewünscht:
+
+```powershell
+Push-Location .\app
+try {
+    npm.cmd run data:generate
+    if ($LASTEXITCODE -ne 0) { throw 'Testfixture konnte nicht erzeugt werden.' }
+    npm.cmd run data:check
+} finally {
+    Pop-Location
+}
+```
+
+Das erzeugt Testdaten, kein Offline-Verzeichnis der App. E-Mail-Vorschläge erst
+nach redaktioneller Prüfung übernehmen und `visibility`, `status`, `verified`
+bewusst setzen. Die Vorschlagsmaske beginnt mit hidden/pending/unverified.
 
 ## Daten, Zugangsdaten und Programme
 
@@ -120,6 +291,59 @@ normalen Git-Checkouts. Falls diese Programme auf einem anderen Computer fehlen,
 müssen passende Windows-Versionen von PHP 8.3+ mit `pdo_mysql` und MariaDB 10.11+
 bereitgestellt werden. Der Helfer lädt nichts automatisch herunter.
 
+Die portable PHP-Konfiguration liegt in `.local-tools/php/php.ini`.
+Programme und Treiber ohne Serverstart prüfen:
+
+```powershell
+& .\.local-tools\php\php.exe --version
+& .\.local-tools\php\php.exe -r 'echo implode(PHP_EOL, PDO::getAvailableDrivers());'
+```
+
+Die Treiberliste muss `mysql` enthalten. Programme aus offiziellen Quellen
+verwenden und Sicherheitsupdates berücksichtigen.
+
+Logs ohne Serverstart lesen:
+
+```powershell
+Get-Content "$env:LOCALAPPDATA\LaverdaDev\workspace-app\api-error.log" -Tail 40
+Get-Content "$env:LOCALAPPDATA\LaverdaDev\workspace-app\mariadb-error.log" -Tail 40
+```
+
+Mit `-Wait` weitere Zeilen live beobachten; `Ctrl+C` beendet nur die Beobachtung.
+
+## Fehlerbehebung und zweite Arbeitskopie
+
+| Problem                                              | Nächster Schritt                                                                                                           |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Portable Programme fehlen                            | Verzeichnisstruktur oben bereitstellen; die Programme sind nicht im Git-Checkout.                                          |
+| Port 3307 oder 8080 belegt                           | Status und belegenden Prozess prüfen; keine fremden Dienste beenden.                                                       |
+| Health ist `Unhealthy` / 503                         | MariaDB, Konfiguration und Migrationen prüfen; Ursache steht im API-Log.                                                   |
+| Health gut, Login 401                                | Clubpasswort noch nicht gesetzt, falsch oder Tenant inaktiv.                                                               |
+| Ortsliste im Browser 401                             | Ohne Bearer-Token erwarteter Zugriffsschutz; angemeldeten Abruf verwenden.                                                 |
+| Login 429                                            | Versuchslimit abwarten, nicht in einer Schleife anmelden.                                                                  |
+| Nach Passwortwechsel gesperrt                        | Alte Sitzungen sind widerrufen; neu anmelden.                                                                              |
+| Gespeicherte Konfiguration gehört zu anderem Projekt | Vorhandene Daten nicht löschen oder `settings.json` umschreiben; ursprünglichen Pfad oder eigene Zustandsablage verwenden. |
+
+Für eine zweite Arbeitskopie kann der Helfer einen eigenen `-StateDirectory`
+bekommen. Beispiel aus dem Stammverzeichnis dieser zweiten Kopie:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Start -StateDirectory "$env:LOCALAPPDATA\LaverdaDev\workspace-app-copy"
+```
+
+Diesen Parameter dann bei
+**jedem** Start/Status/Test/Import/Stop/SetPassword verwenden. Beide Kopien nutzen dieselben Ports und können
+nicht gleichzeitig laufen; zuerst die erste stoppen. Die zweite Ablage übernimmt
+keine bisherigen Daten oder Passwörter.
+
+## Abgrenzung zu Hosttech
+
 Die Dateien `scripts/local.ps1`, `scripts/local.php` und diese Anleitung sind nur
 Entwicklungshilfen. Auf Hosttech verwendest du weiterhin die CLI-Skripte
-`migrate.php` und `import_places.php` sowie die dortigen privaten DB-Variablen.
+`migrate.php`, `import_places.php`, `set-password.php` und die dortigen privaten
+DB-Variablen. Lokale `settings.json`, Datenbank und portable Windows-Programme
+nicht hochladen. Lokales DB-Passwort und Produktions-DB-Passwort sind getrennt.
+
+Lokal werden weder Apache-`.htaccess` noch PHP-FPM, Plesk, TLS-Zertifikat, DNS oder
+die Authorization-Weitergabe auf Hosttech geprüft. Der PHP-Entwicklungsserver ist
+kein Produktionsserver; siehe [PHP-Handbuch](https://www.php.net/manual/en/features.commandline.webserver.php).

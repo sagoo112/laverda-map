@@ -12,6 +12,8 @@ Expo SDK 57, React Native 0.86, React 19 und TypeScript. Die App spricht ausschl
 
 ## Einrichtung
 
+Die Schritt-für-Schritt-Anleitung für PowerShell, Android-Handy per USB, lokale Tests, native Builds und das Stoppen aller Dienste steht in [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md).
+
 Node 24.13+ und npm verwenden. Android benötigt Android Studio/SDK und Java; iOS benötigt macOS/Xcode. Aus `app/`:
 
 ```powershell
@@ -24,6 +26,13 @@ npx expo run:ios
 ```
 
 Native Änderungen, insbesondere SecureStore, MailComposer, Expo-Patches und Maps-Konfiguration, benötigen einen neuen Android-/iOS-Build. Ein JavaScript-Neuladen reicht dafür nicht. Generierte native Ordner bleiben ignoriert. Bei OneDrive-/Windows-Pfadlängenfehlern eine kurze Arbeitskopie ausserhalb von OneDrive und einen kurzen Gradle-Cache verwenden; vorhandene native Anpassungen und Debug-Signatur erhalten.
+
+## Cloud-Builds mit EAS
+
+Die Einrichtung für dein Expo-Konto, Android-Test-APKs und spätere Store-Builds
+steht in [EAS-SETUP.md](EAS-SETUP.md). `eas.json` enthält die Profile
+`development`, `preview` und `production`. Für den ersten eigenständig laufenden
+Android-Test nach der Einrichtung `npm run build:android:preview` verwenden.
 
 ## Konfiguration
 
@@ -60,6 +69,8 @@ MailComposer öffnet die Mail-App mit Betreff, Text und einem UTF-8-JSON-Anhang 
 Vorschläge beginnen mit `visibility=hidden`, `status=pending` und `verified=false`. Die Redaktion prüft alle Inhalte, setzt den gewünschten Freigabestatus und übernimmt sie erst dann in `api/places.json`. Keine direkte Schreibberechtigung der App auf Orte oder Datenbank.
 
 ## Struktur
+
+Das App-Icon ist in `app.json` konfiguriert: `assets/laverda-app-icon.png` (1024×1024, undurchsichtig) für das allgemeine/iOS-Icon und Web-Favicon, `assets/laverda-adaptive-icon.png` (1024×1024, transparenter Rand mit sicherem Innenabstand) für Android auf weissem Hintergrund. Es sind für das Icon aufbereitete Varianten des vorhandenen Laverda-Logos. Änderungen am Launcher-Icon benötigen einen neuen nativen Build und dessen Installation; Metro-Neuladen genügt nicht. Vor Veröffentlichung klärt der Club die Erlaubnis des tatsächlichen Rechteinhabers für App und Store-Auftritt.
 
 ```text
 src/app/               Provider und Navigation

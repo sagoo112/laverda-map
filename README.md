@@ -28,6 +28,8 @@ Auf der Club-Seite stehen Kontakt und ein Vorschlagsformular bereit. Die Mail-Ap
 
 ## Einrichtung
 
+Zum lokalen Arbeiten: [App testen und Android bauen](app/LOCAL-DEVELOPMENT.md) und [API/MariaDB einrichten und testen](api/LOCAL-DEVELOPMENT.md). Beide Anleitungen erklären die Befehle und das spätere Stoppen der Dienste.
+
 1. Backend hochladen; nur `api/public` als Dokumentenstamm veröffentlichen.
 2. DB-Verbindung über Servervariablen oder private `config.local.php` einrichten.
 3. Migrationen ausführen und `places.json` importieren.
