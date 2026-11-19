@@ -49,3 +49,16 @@ jobs:
       - run: |
           sudo mariadb -e 'CREATE DATABASE laverda_test_upgrade_ci CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
           sudo -E env DB_NAME=laverda_test_upgrade_ci php api/tests/upgrade.php
+  local-tools:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+      - name: Check helpers in Windows PowerShell 5.1
+        shell: powershell
+        run: .\app\tests\local-tools.ps1
+      - name: Check helpers in PowerShell 7
+        shell: pwsh
+        run: .\app\tests\local-tools.ps1
