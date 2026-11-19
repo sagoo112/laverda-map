@@ -9,6 +9,7 @@ import CategoryFilter from "./CategoryFilter";
 import PlacesMap, { MAP_AVAILABLE } from "./PlacesMap";
 import PlaceCard from "./PlaceCard";
 import PlaceDetailsSheet from "./PlaceDetailsSheet";
+import PlaceGroupSheet from "./PlaceGroupSheet";
 import PlacesStatus from "./PlacesStatus";
 import { useNearby } from "./useNearby";
 import { EmptyState, Icon, IconButton, SearchField, TextAction } from "../../shared/ui";
@@ -21,7 +22,7 @@ export default function ExploreScreen() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [savedOnly, setSavedOnly] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [fitRevision, setFitRevision] = useState(0);
   const nearby = useNearby();
   const directory = useMemo(
@@ -45,9 +46,11 @@ export default function ExploreScreen() {
     [directory, query, activeCategory, savedOnly, favorites, nearby.origin],
   );
   const pins = useMemo(() => results.filter(isMappable), [results]);
-  const selected = results.find((place) => place.id === selectedId);
-  const close = useCallback(() => setSelectedId(null), []);
-  useFocusEffect(useCallback(() => () => setSelectedId(null), []));
+  const selectedPlaces = selectedIds.flatMap(
+    (id) => results.find((place) => place.id === id) ?? [],
+  );
+  const close = useCallback(() => setSelectedIds([]), []);
+  useFocusEffect(useCallback(() => close, [close]));
   const filtered = !!query || activeCategory !== "all" || savedOnly;
   const clearFilters = () => {
     setQuery("");
@@ -185,8 +188,8 @@ export default function ExploreScreen() {
               places={pins}
               fitRevision={fitRevision}
               onShowList={showList}
-              onSelect={(id) => {
-                setSelectedId(id);
+              onSelect={(ids) => {
+                setSelectedIds(ids);
                 Keyboard.dismiss();
               }}
             />
@@ -241,7 +244,7 @@ export default function ExploreScreen() {
                 place={item}
                 onPress={() => {
                   Keyboard.dismiss();
-                  setSelectedId(item.id);
+                  setSelectedIds([item.id]);
                 }}
                 distance={
                   nearby.origin && isMappable(item)
@@ -257,7 +260,15 @@ export default function ExploreScreen() {
           />
         )}
       </View>
-      {selected && <PlaceDetailsSheet key={selected.id} place={selected} onClose={close} />}
+      {selectedPlaces.length > 1 ? (
+        <PlaceGroupSheet
+          places={selectedPlaces}
+          onSelect={(id) => setSelectedIds([id])}
+          onClose={close}
+        />
+      ) : selectedPlaces[0] ? (
+        <PlaceDetailsSheet key={selectedPlaces[0].id} place={selectedPlaces[0]} onClose={close} />
+      ) : null}
     </View>
   );
 }

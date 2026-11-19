@@ -12,6 +12,7 @@ import * as Location from "expo-location";
 import source from "./fixtures/places.generated.json";
 import { requestJson } from "../src/shared/api";
 import { favoritesKey } from "../src/features/places/cache";
+import type { PlacesMapProps } from "../src/features/places/PlacesMap";
 
 jest.mock("../src/shared/api", () => ({
   ...jest.requireActual("../src/shared/api"),
@@ -21,12 +22,39 @@ jest.mock("../src/shared/api", () => ({
 jest.mock("../src/features/auth/AuthProvider", () => ({ useAuth: () => ({ signOut: jest.fn() }) }));
 jest.mock("../src/features/club/mail", () => ({ prepareEmail: jest.fn() }));
 jest.mock("@react-navigation/native", () => ({ useFocusEffect: () => {} }));
-jest.mock("../src/features/places/PlacesMap", () => ({
-  __esModule: true,
-  default: () => null,
-  MAP_AVAILABLE: false,
-}));
-jest.mock("../src/features/places/PlaceDetailsSheet", () => () => null);
+let mockMapAvailable = false;
+jest.mock("../src/features/places/PlacesMap", () => {
+  const { Button } = require("react-native");
+  const { groupMapPlaces } = jest.requireActual("../src/features/places/mapGroups");
+  return {
+    __esModule: true,
+    get MAP_AVAILABLE() {
+      return mockMapAvailable;
+    },
+    default: ({ places, onSelect }: PlacesMapProps) =>
+      groupMapPlaces(places).map((group: PlacesMapProps["places"]) => (
+        <Button
+          key={group[0].id}
+          title={group.length > 1 ? `${group.length} entries on map` : group[0].name}
+          onPress={() => onSelect(group.map(({ id }) => id))}
+        />
+      )),
+  };
+});
+jest.mock("@gorhom/bottom-sheet", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  return {
+    __esModule: true,
+    default: React.forwardRef(
+      ({ children }: { children: React.ReactNode }, _ref: React.ForwardedRef<unknown>) => (
+        <View>{children}</View>
+      ),
+    ),
+    BottomSheetScrollView: View,
+    BottomSheetBackdrop: View,
+  };
+});
 jest.mock("expo-location", () => ({
   requestForegroundPermissionsAsync: jest.fn(),
   getCurrentPositionAsync: jest.fn(),
@@ -60,16 +88,41 @@ async function mount(child: React.ReactElement) {
   return result;
 }
 beforeEach(async () => {
+  mockMapAvailable = false;
   await AsyncStorage.clear();
   jest.clearAllMocks();
   jest.mocked(requestJson).mockResolvedValue(source);
+});
+
+test("a shared map marker offers both entries and opens the chosen details", async () => {
+  mockMapAvailable = true;
+  const club = source.entries.find((entry) => entry.id === "www-laverdaclub-ch-82bbf1")!;
+  const workshop = source.entries.find(
+    (entry) => entry.id === "laverda-werkstatt-peter-strasser-c84b94",
+  )!;
+  jest.mocked(requestJson).mockResolvedValue({
+    entries: [{ ...club, location: workshop.location }, workshop],
+  });
+  const user = userEvent.setup();
+  await mount(<ExploreScreen />);
+  for (const [place, category] of [
+    [workshop, "Workshops"],
+    [club, "Clubs"],
+  ] as const) {
+    await user.press(screen.getByRole("button", { name: "2 entries on map" }));
+    expect(screen.getByRole("header", { name: "2 places here" })).toBeTruthy();
+    await user.press(screen.getByRole("button", { name: `${place.name}, ${category}` }));
+    expect(screen.getByRole("header", { name: place.name })).toBeTruthy();
+    expect(screen.queryByRole("header", { name: "2 places here" })).toBeNull();
+    await user.press(screen.getByRole("button", { name: "Close place details" }));
+  }
 });
 test("authenticated API directory supports search and saved filtering", async () => {
   const user = userEvent.setup();
   await mount(<ExploreScreen />);
   expect(screen.queryByText(/password/i)).toBeNull();
   await user.press(screen.getByRole("button", { name: "List view" }));
-  await user.type(screen.getByLabelText("Search places"), "Eggenwil");
+  await user.type(screen.getByLabelText("Search places"), "Ibach");
   const name = "LAVERDA Club Schweiz - LCS (CH)";
   expect(screen.getByRole("button", { name: "View " + name })).toBeTruthy();
   await user.press(screen.getByRole("button", { name: "Save " + name }));

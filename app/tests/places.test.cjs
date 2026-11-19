@@ -11,8 +11,21 @@ const {
   countryName,
 } = require("../src/features/places/model.ts");
 const { webUrl } = require("../src/shared/urls.ts");
+const { groupMapPlaces } = require("../src/features/places/mapGroups.ts");
 const source = require("./fixtures/places.generated.json");
 const seed = require("../../api/places.json");
+
+test("co-located club and workshops share one map marker led by the club", () => {
+  const makePlace = (id, type, lat, lng) => ({ id, type, location: { lat, lng } });
+  const club = makePlace("club", "club", 47.369024, 8.339201);
+  const workshop = makePlace("workshop", "service", 47.369, 8.339417);
+  const shop = makePlace("shop", "shop", 47.369024, 8.339201);
+  const separateSite = makePlace("separate", "service", 47.369024, 8.3397);
+  const all = [workshop, separateSite, shop, club];
+  assert.deepEqual(groupMapPlaces(all), [[club, shop, workshop], [separateSite]]);
+  assert.deepEqual(groupMapPlaces([...all].reverse()), groupMapPlaces(all));
+  assert.deepEqual(groupMapPlaces([workshop]), [[workshop]]);
+});
 
 test("generated snapshot preserves every public seed field and allocated ID", () => {
   const entries = parseEntries(source);
