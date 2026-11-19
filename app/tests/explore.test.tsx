@@ -141,9 +141,25 @@ test("bookmarks restored from device storage are available after relaunch", asyn
     await screen.findByRole("button", { name: "Unsave LAVERDA Club Schweiz - LCS (CH)" }),
   ).toBeTruthy();
 });
+test("Explore hides forums and registries by default but keeps bookmarked resources reachable", async () => {
+  const registry = source.entries.find((entry) => entry.type === "registry")!;
+  await AsyncStorage.setItem(favoritesKey, JSON.stringify([registry.id]));
+  const user = userEvent.setup();
+  await mount(<ExploreScreen />);
+
+  expect(screen.queryByRole("button", { name: "Forums" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Registries" })).toBeNull();
+  await user.type(screen.getByLabelText("Search places"), "Atlas Owners Registry");
+  expect(screen.getByText("No places found")).toBeTruthy();
+
+  await user.press(screen.getByRole("button", { name: "Saved places" }));
+  expect(await screen.findByRole("button", { name: `View ${registry.name}` })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Forums" })).toBeNull();
+});
 test("resources support search, type filters and one-tap reset", async () => {
   const user = userEvent.setup();
   await mount(<ResourcesScreen />);
+  expect(screen.getByRole("button", { name: "Registries" })).toBeTruthy();
   await user.press(screen.getByRole("button", { name: "Forums" }));
   await user.type(screen.getByLabelText("Search resources"), "no-such-resource-xyz");
   expect(screen.getByText("No resources found")).toBeTruthy();
@@ -158,7 +174,7 @@ test("missing map configuration opens the usable list; empty filters can be rese
   await user.type(screen.getByLabelText("Search places"), "no-matches-xyz");
   expect(screen.getByText("No places found")).toBeTruthy();
   await user.press(screen.getByRole("button", { name: "Clear filters" }));
-  expect(screen.getByText("33 places")).toBeTruthy();
+  expect(screen.getByText("30 places")).toBeTruthy();
 });
 test("nearby permission is only requested on a tap and denial keeps browsing available", async () => {
   const user = userEvent.setup();
@@ -170,7 +186,7 @@ test("nearby permission is only requested on a tap and denial keeps browsing ava
   expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
   await user.press(screen.getByRole("button", { name: "Near me" }));
   expect(alert).toHaveBeenCalledWith("Location is optional", expect.any(String));
-  expect(screen.getByText("33 places")).toBeTruthy();
+  expect(screen.getByText("30 places")).toBeTruthy();
   expect(Location.getCurrentPositionAsync).not.toHaveBeenCalled();
   alert.mockRestore();
 });

@@ -3,7 +3,7 @@ import { FlatList, Keyboard, Pressable, StyleSheet, Text, View } from "react-nat
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { usePlaces } from "./PlacesProvider";
-import { filterPlaces, isMappable, sortPlaces, distanceKm } from "./model";
+import { filterPlaces, isMappable, isOnlineResource, sortPlaces, distanceKm } from "./model";
 import { categories } from "./categories";
 import CategoryFilter from "./CategoryFilter";
 import PlacesMap, { MAP_AVAILABLE } from "./PlacesMap";
@@ -26,8 +26,11 @@ export default function ExploreScreen() {
   const [fitRevision, setFitRevision] = useState(0);
   const nearby = useNearby();
   const directory = useMemo(
-    () => places.filter((place) => savedOnly || place.type !== "blog"),
-    [places, savedOnly],
+    () =>
+      places.filter(
+        (place) => !isOnlineResource(place) || (savedOnly && favorites.includes(place.id)),
+      ),
+    [places, savedOnly, favorites],
   );
   const types = useMemo(
     () =>
