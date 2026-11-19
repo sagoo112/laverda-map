@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-06-09",
+  "generatedAt": "2026-11-19",
   "entries": [
     {
       "id": "www-laverdaclub-ch-82bbf1",
@@ -9,7 +9,7 @@
       "url": "https://www.laverdaclub.ch/",
       "status": "OK",
       "name": "LAVERDA Club Schweiz - LCS (CH)",
-      "address": "Hübelgasse 9, 5445 Eggenwil, Schweiz",
+      "address": "Grosssteinstrasse 25, 6438 Ibach, Schweiz",
       "country": "CH",
       "visibility": "public",
       "verified": true,
@@ -21,12 +21,12 @@
       "lastCheckedAt": "2026-02-09",
       "location": {
         "mode": "exact",
-        "lat": 47.369024,
-        "lng": 8.339201,
-        "label": "Hübelgasse 9, 5445 Eggenwil, Schweiz"
+        "lat": 47.01365879009796,
+        "lng": 8.652366197044666,
+        "label": "Grosssteinstrasse 25, 6438 Ibach, Schweiz"
       },
       "locationSource": "excel",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.36902,8.33920"
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.01366,8.65237"
     },
     {
       "id": "www-laverda-gemeinschaft-deutschland-de-d50561",
@@ -138,7 +138,7 @@
       "category": "Club",
       "url": "https://motoclublaverdabreganze.com/",
       "status": "OK",
-      "name": "Moto LAVERDA Club Breganze (IT)",
+      "name": "Motoclub LAVERDA Breganze (IT)",
       "address": "Via Scifo 8, 36042 Breganze VI, Italien",
       "country": "IT",
       "visibility": "public",
@@ -217,7 +217,7 @@
       "url": "http://laverda750.free.fr/web_lav750/index.php",
       "status": "OK",
       "name": "Amicale LAVERDA 750 - France (FR)",
-      "address": null,
+      "address": "c/o Paul Marx, 36 rue Pierre Semard, 59273 Fretin, France",
       "country": "FR",
       "visibility": "public",
       "verified": true,
@@ -228,13 +228,13 @@
       "priority": 1,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 46.22764,
-        "lng": 2.21375,
-        "label": "France (centroid)"
+        "mode": "exact",
+        "lat": 50.558857684592944,
+        "lng": 3.1573492548750997,
+        "label": "c/o Paul Marx, 36 rue Pierre Semard, 59273 Fretin, France"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+      "locationSource": "excel",
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=50.55886,3.15735"
     },
     {
       "id": "www-laverdaclub-eu-2a8a0c",
@@ -712,8 +712,8 @@
       "category": "Blog",
       "url": "https://laverda-passion.blogspot.com/",
       "status": "OK",
-      "name": "LAVERDA Passion Blog (französisch)",
-      "address": null,
+      "name": "LAVERDA Passion Blog (français)",
+      "address": "Paris, France",
       "country": "FR",
       "visibility": "public",
       "verified": true,
@@ -722,13 +722,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 46.22764,
-        "lng": 2.21375,
-        "label": "France (centroid)"
+        "mode": "approx",
+        "lat": 48.86326717483405,
+        "lng": 2.347327982821125,
+        "label": "Paris, France"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "www-laverdaclub-ch-710938",
@@ -736,7 +736,7 @@
       "category": "Blog",
       "url": "https://www.laverdaclub.ch/650/laverda/index.html",
       "status": "OK",
-      "name": "informative HP von Markus für die 650-er/668-er Zané-Modelle von LAVERDA",
+      "name": "Website über LAVERDA 650/668 Zané-Modelle (deutsch)",
       "address": null,
       "country": "CH",
       "visibility": "public",
@@ -760,8 +760,8 @@
       "category": "Blog",
       "url": "https://www.laverdacorse.it",
       "status": "OK",
-      "name": "Homepage von Piero Laverda, wird von seinem ältesten Sohn Giovanni betreut",
-      "address": null,
+      "name": "Homepage von Piero Laverda (italiano / english)",
+      "address": "Breganze, Italia",
       "country": "IT",
       "visibility": "public",
       "verified": true,
@@ -770,13 +770,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 41.87194,
-        "lng": 12.56738,
-        "label": "Italy (centroid)"
+        "mode": "approx",
+        "lat": 45.706182475098764,
+        "lng": 11.565221237686789,
+        "label": "Breganze, Italia"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=41.87194,12.56738"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "www-laverdamania-net-f806fe",
@@ -784,8 +784,8 @@
       "category": "Blog",
       "url": "https://www.laverdamania.net",
       "status": "OK",
-      "name": "LAVERDA Homepage aus Frankreich (französisch)",
-      "address": null,
+      "name": "LAVERDA Homepage aus Frankreich (français)",
+      "address": "Paris, France",
       "country": "FR",
       "visibility": "public",
       "verified": true,
@@ -794,13 +794,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 46.22764,
-        "lng": 2.21375,
-        "label": "France (centroid)"
+        "mode": "approx",
+        "lat": 48.86443522912112,
+        "lng": 2.3201285251517128,
+        "label": "Paris, France"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "www-laverda-team-werndl-de-affc02",
@@ -808,8 +808,8 @@
       "category": "Blog",
       "url": "https://www.laverda-team-werndl.de",
       "status": "OK",
-      "name": "Homepage von Willi Werndl und seinem Team",
-      "address": null,
+      "name": "Homepage Moto LAVERDA Team Werndl (deutsch)",
+      "address": "Grafen-von-Berchem-Strasse 96, 84375 Kirchdorf a. Inn, Deutschland",
       "country": "DE",
       "visibility": "public",
       "verified": true,
@@ -818,13 +818,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 51.16569,
-        "lng": 10.45153,
-        "label": "Germany (centroid)"
+        "mode": "exact",
+        "lat": 48.24726678449428,
+        "lng": 12.984930183604027,
+        "label": "Grafen-von-Berchem-Strasse 96, 84375 Kirchdorf a. Inn, Deutschland"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "www-laverdino-de-59cb7c",
@@ -832,8 +832,8 @@
       "category": "Blog",
       "url": "https://www.laverdino.de",
       "status": "OK",
-      "name": "Homepage von Sigi aus Bayern (in deutsch und englisch)",
-      "address": null,
+      "name": "Homepage von Sigi Forster (deutsch / english)",
+      "address": "Kirchweg 3, 82383 Hohenpeißenberg, Deutschland",
       "country": "DE",
       "visibility": "public",
       "verified": true,
@@ -842,13 +842,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 51.16569,
-        "lng": 10.45153,
-        "label": "Germany (centroid)"
+        "mode": "exact",
+        "lat": 47.792937542163706,
+        "lng": 11.007652254748834,
+        "label": "Kirchweg 3, 82383 Hohenpeißenberg, Deutschland"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "alcocknick-wordpress-com-723635",
@@ -856,9 +856,9 @@
       "category": "Blog",
       "url": "https://alcocknick.wordpress.com/",
       "status": "OK",
-      "name": "Privater LAVERDA-Blog von Nick Alcock (englisch)",
-      "address": null,
-      "country": "unknown",
+      "name": "LAVERDA-Blog von Nick Alcock (english)",
+      "address": "London City, UK",
+      "country": "GB",
       "visibility": "public",
       "verified": true,
       "linkType": "website",
@@ -866,13 +866,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 20.0,
-        "lng": 0.0,
-        "label": "World (fallback)"
+        "mode": "approx",
+        "lat": 51.506141668584334,
+        "lng": -0.07539217195553984,
+        "label": "London City, UK"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=20.00000,0.00000"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "recreation-cadres-chez-alice-fr-c6caa3",
@@ -880,8 +880,8 @@
       "category": "Blog",
       "url": "http://recreation-cadres.chez-alice.fr/",
       "status": "OK",
-      "name": "Site speziell für LAVERDA Strike 750 ccm (franz./englisch)",
-      "address": null,
+      "name": "Website LAVERDA Strike 750 ccm (français / english)",
+      "address": "Paris, France",
       "country": "FR",
       "visibility": "public",
       "verified": true,
@@ -890,13 +890,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 46.22764,
-        "lng": 2.21375,
-        "label": "France (centroid)"
+        "mode": "approx",
+        "lat": 48.85657606942729,
+        "lng": 2.2984153544441073,
+        "label": "Paris, France"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "www-laverdamania-net-f806fe",
@@ -904,8 +904,8 @@
       "category": "Blog",
       "url": "https://www.Laverdamania.net",
       "status": "OK",
-      "name": "Webseite von Jean Louis Olive JLO (franz./englisch)",
-      "address": null,
+      "name": "Website von Jean Louis Olive JLO (français / english)",
+      "address": "13400 Aubagne, France",
       "country": "FR",
       "visibility": "public",
       "verified": true,
@@ -914,13 +914,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 46.22764,
-        "lng": 2.21375,
-        "label": "France (centroid)"
+        "mode": "approx",
+        "lat": 43.29269772803157,
+        "lng": 5.567556197973187,
+        "label": "13400 Aubagne, France"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=46.22764,2.21375"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "www-laverda-register-de-fc4c20",
@@ -929,7 +929,7 @@
       "url": "https://www.laverda-register.de",
       "status": "OK",
       "name": "Deutsches LAVERDA-Register von Jürgen Wortmann",
-      "address": null,
+      "address": "40210 Düsseldorf, Deutschland",
       "country": "DE",
       "visibility": "public",
       "verified": true,
@@ -938,13 +938,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 51.16569,
-        "lng": 10.45153,
-        "label": "Germany (centroid)"
+        "mode": "approx",
+        "lat": 51.22094653418705,
+        "lng": 6.792361881244805,
+        "label": "40210 Düsseldorf, Deutschland"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=51.16569,10.45153"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "www-vanderschalk-com-7a4178",
@@ -953,7 +953,7 @@
       "url": "https://www.vanderschalk.com/sfc",
       "status": "OK",
       "name": "International LAVERDA 750 SFC Owners Registry",
-      "address": null,
+      "address": "Rotterdam, The Netherlands",
       "country": "NL",
       "visibility": "public",
       "verified": true,
@@ -962,13 +962,13 @@
       "priority": 3,
       "lastCheckedAt": "2026-02-09",
       "location": {
-        "mode": "country-centroid",
-        "lat": 52.13263,
-        "lng": 5.29127,
-        "label": "Netherlands (centroid)"
+        "mode": "approx",
+        "lat": 51.9245595444121,
+        "lng": 4.4699529397389295,
+        "label": "Rotterdam, The Netherlands"
       },
-      "locationSource": "centroid",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=52.13263,5.29127"
+      "locationSource": "excel",
+      "navigationUrl": null
     },
     {
       "id": "or600-webspace-rocks-b100d6",
@@ -1013,12 +1013,12 @@
       "lastCheckedAt": null,
       "location": {
         "mode": "exact",
-        "lat": 47.36900083156607,
-        "lng": 8.339417094419726,
+        "lat": 47.36906556482783,
+        "lng": 8.339533325895156,
         "label": "Hübelgasse 9, 5445 Eggenwil, Schweiz"
       },
       "locationSource": "excel",
-      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.36900,8.33942"
+      "navigationUrl": "https://www.google.com/maps/dir/?api=1&destination=47.36907,8.33953"
     },
     {
       "id": "laverda-werkstatt-jean-francois-ischler-9bde8e",
