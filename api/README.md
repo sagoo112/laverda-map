@@ -143,17 +143,12 @@ Kein Mailanhang wird automatisch importiert. Ein erneuter Import kann manuelle D
 
 Die vollständige lokale Schritt-für-Schritt-Anleitung mit Start/Stop, sicherer Passworteingabe, angemeldeten HTTP-Aufrufen und den Testbefehlen steht in [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md).
 
+Der Windows-Helfer bietet zusätzlich `Doctor`, `Check`, `Health`, `CheckAccess`, `Database`, `Restart` und `Logs`. `Database` öffnet die lokale MariaDB-Konsole mit gespeicherten Zugangsdaten; standardmässig ohne Ortsschreibrechte. `Test -StopAfterTest` stoppt die eigene lokale Umgebung nach dem Test auch bei Fehlern. `Doctor`/`Check` starten keine Datenbank; `CheckAccess` prüft das bestehende lokale Clubpasswort und widerruft seine Testsitzung. Details und Beispiele stehen in der lokalen Anleitung.
+
 ```powershell
-php api/tests/unit.php
-php api/tests/config.php
-php api/tests/password.php
-php api/tests/health.php
-# Nur frische isolierte Datenbanken namens laverda_test_*:
-php api/tests/integration.php
-php api/tests/upgrade.php
-php api/scripts/check-deployment.php https://api.laverdaclub.ch
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Check
 ```
 
-Integrationsprüfungen starten einen kurzlebigen PHP-Testserver, prüfen echte MariaDB-Abfragen, alle Seed-Felder, Authentifizierung, Sitzungswiderruf/-ablauf, Versuchslimits, Tenant-Isolation, Sichtbarkeit und Migrationen. Niemals gegen die Produktionsdatenbank ausführen. `check-deployment.php` prüft bewusst anonym: Health 200 und Ortsrouten 401. Der angemeldete Vertrag wird separat getestet.
+Für den vollständigen lokalen Integrationslauf separat `local.ps1 Test -StopAfterTest` verwenden. Das startet eine lokale MariaDB und legt isolierte Testdatenbanken an. Integrationsprüfungen starten einen kurzlebigen PHP-Testserver, prüfen echte MariaDB-Abfragen, alle Seed-Felder, Authentifizierung, Sitzungswiderruf/-ablauf, Versuchslimits, Tenant-Isolation, Sichtbarkeit und Migrationen. Niemals gegen die Produktionsdatenbank ausführen. `php api/scripts/check-deployment.php https://api.laverdaclub.ch` prüft nach dem Deployment bewusst anonym: Health 200 und Ortsrouten 401. Der angemeldete Vertrag wird separat getestet.
 
 Windows-Entwicklung: [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md). `Start` wendet Migrationen an und vergibt spezifische Auth-Tabellenrechte; vorhandene Daten werden nicht neu importiert. Das Clubpasswort wird ausdrücklich separat gesetzt. `Stop` fährt MariaDB sauber herunter. PHPStan: `php .local-tools/phpstan.phar analyse -c api/phpstan.neon --memory-limit=512M`.

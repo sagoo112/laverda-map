@@ -10,6 +10,38 @@ Die lokale Umgebung verwendet denselben PHP-Code und dieselben Migrationen wie
 Hosttech. Die Expo-App wird dafür nicht benötigt. Der Helfer installiert keinen
 Windows-Dienst und startet keine Programme automatisch beim Anmelden.
 
+## Kurzübersicht der Skriptbefehle
+
+Alle Aufrufe aus dem Projektstamm. Schema: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 AKTION`.
+
+| Aktion                      | Wirkung                                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Doctor`                    | Prüft portable PHP-/MariaDB-Programme und PDO MySQL, ohne Server, neue Zugangsdaten oder DB-Einrichtung.                                      |
+| `Check`                     | PHP-Syntax und reine Tests; benötigt PHP, aber keine laufende MariaDB und keinen Serverstart.                                                 |
+| `Start`                     | Initialisiert bei Bedarf, migriert und startet die lokale API/MariaDB.                                                                        |
+| `SetPassword`               | Fragt verdeckt nach einem neuen lokalen Clubpasswort; beide Dienste vorher starten.                                                           |
+| `Health`                    | Prüft die bereits laufende eigene API, zeigt Komponentenstatus und testet anonymen Zugriffsschutz.                                            |
+| `CheckAccess`               | Fragt verdeckt das bestehende Clubpasswort ab, prüft Anmeldung, Sitzung, Ortsliste und ersten Detailaufruf; meldet die Testsitzung danach ab. |
+| `Database`                  | Öffnet die lokale MariaDB-Konsole mit den gespeicherten DB-Zugangsdaten; keine manuelle Passwortentschlüsselung.                              |
+| `Database -CheckConnection` | Prüft nur Verbindung, angemeldeten DB-Benutzer und Anzahl der Orte; schliesst danach den Client.                                              |
+| `Restart`                   | Stoppt und startet die eigene lokale API/MariaDB und zeigt danach den Status.                                                                 |
+| `Logs`                      | Zeigt die letzten 40 API-Logzeilen; `-Log Database` wählt MariaDB, `-Follow` beobachtet neue Zeilen.                                          |
+| `Test -StopAfterTest`       | Vollständiger Integrationstest mit anschliessendem sauberem Stoppen auch bei Fehlern.                                                         |
+| `Import`                    | Bewusster erneuter Import; kann lokale importierte Felder auf JSON-Werte zurücksetzen.                                                        |
+| `Status` / `Stop`           | Eigene Prozesse anzeigen beziehungsweise sauber beenden.                                                                                      |
+
+Beispiel für eine Voraussetzungskontrolle:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Doctor
+```
+
+`Health` und `CheckAccess` verlangen die bereits gestartete eigene API. `CheckAccess` setzt oder ändert kein Passwort und schreibt keine Orte. Es erzeugt kurz eine Anmeldungssitzung und versucht sie auch bei Fehlern wieder zu widerrufen. Bei einem Verbindungsabbruch während der Abmeldung kann das Token bis zum regulären Ablauf bestehen bleiben. Passphrase und Token werden nie ausgegeben oder gespeichert. Die Prüfung ist fest an die lokale Origin gebunden.
+
+`Logs -Follow` mit `Ctrl+C` beenden; damit werden die Dienste nicht gestoppt. `-StopAfterTest` stoppt ausdrücklich auch die vorher schon laufenden Dienste dieser lokalen Umgebung; Daten bleiben erhalten. Ohne Schalter behält `Test` sein bisheriges Verhalten und lässt die Umgebung laufen. Keiner der Befehle lädt Windows-/Android-Programme herunter oder greift auf Hosttech zu.
+
+Die zusätzlichen Helferprüfungen in `app/tests/local-tools.ps1` testen auch den lokalen Anmeldecheck mit simulierten HTTP-Antworten, einschliesslich Abmeldung bei Fehlern. Der Aufruf steht in der [App-Anleitung](../app/LOCAL-DEVELOPMENT.md). Diese Simulation ersetzt den echten Datenbanktest mit `Test` beziehungsweise `CheckAccess` nicht.
+
 ## Starten
 
 Öffne PowerShell im Projektverzeichnis und führe aus:
@@ -91,11 +123,10 @@ es setzt weder das lokale noch das Produktionspasswort automatisch.
 - Ortsrouten liefern ohne Bearer-Token **HTTP 401**, `{"error":"unauthorized"}`.
 - Auch unbekannte Tenants liefern anonym 401; sie verraten keine Ortsdaten.
 
-Den vorhandenen Smoke-Test aus dem Projektstamm aufrufen:
+Den zusammengefassten Health-/Smoke-Test aus dem Projektstamm aufrufen:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8080/health
-& .\.local-tools\php\php.exe .\api\scripts\check-deployment.php http://127.0.0.1:8080
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Health
 ```
 
 Erwartet: Health 200, Laverda-Ortsliste 401, unbekannter Tenant 401. `Healthy`
@@ -110,37 +141,18 @@ Serverdetails werden nicht angezeigt.
 
 ## Anmelden und echte MariaDB-Daten abrufen
 
-Diese Blöcke im selben PowerShell-Fenster ausführen. Das vorher eingerichtete
-lokale Clubpasswort verdeckt eingeben; das Token wird nicht ausgegeben:
+Der Helfer übernimmt Anmeldung, Sitzungsprüfung, Liste, ersten Detailaufruf und
+Abmeldung in einem Befehl. Das vorher eingerichtete lokale Clubpasswort verdeckt
+eingeben; das Token wird nicht ausgegeben:
 
 ```powershell
-$localApi = 'http://127.0.0.1:8080'
-$clubSecret = Read-Host 'Lokales Clubpasswort' -AsSecureString
-try {
-    $clubPlain = ([pscredential]::new('club', $clubSecret)).GetNetworkCredential().Password
-    $loginBody = @{ password = $clubPlain } | ConvertTo-Json -Compress
-    $localLogin = Invoke-RestMethod -Method Post -Uri "$localApi/api/v1/tenants/laverda/auth/login" -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($loginBody))
-    $localHeaders = @{ Authorization = 'Bearer ' + $localLogin.token }
-    Write-Host ('Angemeldet bis: ' + $localLogin.expiresAt)
-} finally {
-    $clubSecret.Dispose()
-    Remove-Variable clubPlain, loginBody -ErrorAction SilentlyContinue
-}
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 CheckAccess
 ```
 
 Falsches Passwort: 401. Zu viele Versuche: 429, dann abwarten. Token gelten
 maximal 24 Stunden und sind Zugangsnachweise; nicht teilen oder in Dateien
-kopieren. Jetzt Liste, einen Ort und die Sitzung abrufen:
-
-```powershell
-$directory = Invoke-RestMethod -Uri "$localApi/api/v1/tenants/laverda/places" -Headers $localHeaders
-Write-Host ('Sichtbare Orte: ' + $directory.entries.Count)
-if ($directory.entries.Count -gt 0) {
-    $placeId = [Uri]::EscapeDataString($directory.entries[0].id)
-    Invoke-RestMethod -Uri "$localApi/api/v1/tenants/laverda/places/$placeId" -Headers $localHeaders
-}
-Invoke-RestMethod -Uri "$localApi/api/v1/tenants/laverda/auth/session" -Headers $localHeaders
-```
+kopieren. Bei Erfolg zeigt das Skript die Zahl sichtbarer Orte. Es verändert
+keine Ortsdaten und setzt kein Passwort neu.
 
 Die API liest MariaDB, nicht die JSON-Datei. Die Quelle enthält 43 Einträge; nur
 `visibility=public` erscheint im angemeldeten Verzeichnis. Die sichtbare Anzahl
@@ -149,22 +161,63 @@ kann daher von der Zahl aller DB-Zeilen abweichen. Der Listenvertrag lautet
 
 Mit gültiger Laverda-Sitzung: unbekannte oder nicht öffentliche Orts-ID 404;
 Zugriff auf einen anderen Tenant 401. Die Integrationssuite prüft diese Fälle.
-Nach dem manuellen Test abmelden:
+Der Helfer widerruft die Testsitzung im abschliessenden Bereinigungsschritt.
+Die Handy-App hat eine eigene Sitzung und bleibt davon unabhängig.
+
+## Direkt an der lokalen Datenbank anmelden
+
+Zuerst die Umgebung mit `Start` starten. Dann aus dem Projektstamm:
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri "$localApi/api/v1/tenants/laverda/auth/logout" -Headers $localHeaders
-Remove-Variable localLogin, localHeaders, directory -ErrorAction SilentlyContinue
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Database
 ```
 
-Das widerruft diese Test-Sitzung. Die Handy-App hat eine eigene Sitzung und
-bleibt davon unabhängig.
+Damit öffnet sich die **MariaDB-Konsole im selben Fenster**, keine HeidiSQL-Oberfläche.
+Der Helfer verwendet fest `127.0.0.1:3307`, `api_laverda_local` und standardmässig
+`laverda_api_local`. Die DB-Zugangsdaten entschlüsselt Windows für dein Benutzerkonto;
+du musst sie weder anzeigen noch kopieren. Das ist das technische DB-Passwort,
+nicht das Clubpasswort der App. Die API muss dafür nicht laufen, MariaDB schon.
+
+Zum Ansehen beispielsweise diese SQL-Anweisung eingeben:
+
+```sql
+SELECT id, name, visibility FROM places ORDER BY sort_order, id LIMIT 10;
+```
+
+SQL mit Semikolon abschliessen. `SHOW TABLES;` zeigt Tabellen. Mit `exit;` abmelden:
+Das schliesst nur den Client, nicht MariaDB oder die API.
+
+Der Standardbenutzer hat keine Ortsschreibrechte. Zum bewussten Bearbeiten den
+Importbenutzer ausdrücklich auswählen:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Database -DatabaseRole Import
+```
+
+`-DatabaseRole Admin` wählt das lokale Administrationskonto; nur für Verwaltungsaufgaben
+verwenden. Der Client aktiviert `--safe-updates` als zusätzlichen Schutz vor
+versehentlich breiten Updates/Deletes. Das ersetzt weder passende WHERE-Bedingungen
+noch Backups. Reimport kann manuell bearbeitete Felder wieder überschreiben.
+
+Nur die Verbindung prüfen, ohne in der Konsole zu bleiben:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Database -CheckConnection
+```
+
+Der Helfer startet keine Server und verwendet keine Hosttech-Konfiguration. Das Passwort
+steht nicht in Prozessargumenten oder der Zwischenablage. Während des Clients gibt es
+eine temporäre Optionsdatei unter der lokalen Zustandsablage, deren Ordner nur dein
+Windows-Konto berechtigt. Beim normalen Beenden und bei behandelten Fehlern wird sie
+gelöscht. Nach hartem Prozessabbruch/Rechnerausfall können private `client-*`-Ordner
+zurückbleiben; diese nach Ende aller DB-Clients entfernen. Nicht hochladen oder teilen.
+Die [MariaDB-Client-Dokumentation](https://mariadb.com/docs/server/clients-and-utilities/mariadb-client/mariadb-command-line-client)
+erklärt Optionsdateien, SQL-Konsole und `--safe-updates`.
 
 ## Status, Stoppen und erneut Starten
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Status
-powershell -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Stop
-powershell -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Start
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Restart
 ```
 
 `Stop` beendet den eigenen PHP-Prozess und sendet MariaDB einen ordentlichen
@@ -172,17 +225,16 @@ Shutdown-Befehl, damit die Datenbank ihre Daten schreiben und schliessen kann.
 Die gespeicherten Daten werden nicht gelöscht. Prozess-ID, Startzeit und
 Programmpfad werden verglichen, bevor ein Prozess beendet wird. Andere PHP- oder
 Datenbankprozesse werden nicht angefasst. Wiederholtes Starten und Stoppen ist
-erlaubt. Belegte Ports anderer Programme führen zu einer Fehlermeldung.
+erlaubt. `Restart` bündelt Stoppen, Starten und Statusanzeige. Nur nachsehen mit
+`local.ps1 Status`, nur beenden mit `local.ps1 Stop`. Belegte Ports anderer Programme
+führen zu einer Fehlermeldung. Eine bereits offene DB-Konsole vorher mit `exit;` verlassen.
 
 ## Automatische Tests
 
 Reine Tests ohne laufende API oder Datenbank, aus dem Projektstamm:
 
 ```powershell
-& .\.local-tools\php\php.exe .\api\tests\unit.php
-& .\.local-tools\php\php.exe .\api\tests\config.php
-& .\.local-tools\php\php.exe .\api\tests\password.php
-& .\.local-tools\php\php.exe .\api\tests\health.php
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Check
 ```
 
 Diese prüfen Importvalidierung, Konfigurationsauflösung, Passwortrichtlinie,
@@ -197,12 +249,7 @@ Ausgabe interner Daten.
 Vollständiger Test mit Datenbank und anschliessendem Stopp:
 
 ```powershell
-try {
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Test
-    if ($LASTEXITCODE -ne 0) { throw 'API-Testlauf fehlgeschlagen.' }
-} finally {
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Stop
-}
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Test -StopAfterTest
 ```
 
 `Test` startet die Umgebung und wendet gegebenenfalls neue Migrationen an. Es
@@ -219,8 +266,8 @@ Integrationstests niemals mit Produktions-Zugangsdaten ausführen.
 
 Testdatenbanken bleiben für Untersuchungen erhalten und belegen bei Wiederholung
 zusätzlichen Speicher. `Test` allein lässt die Server gestartet. Der obige
-`finally`-Block stoppt sie auch bei Fehlern. Zum anschliessenden Arbeiten am Handy
-stattdessen `local.ps1 Test` ohne diesen Stop-Block verwenden und später stoppen.
+Schalter `-StopAfterTest` stoppt sie auch bei Fehlern. Zum anschliessenden Arbeiten am Handy
+stattdessen `local.ps1 Test` ohne diesen Schalter verwenden und später stoppen.
 
 Optional, falls `.local-tools/phpstan.phar` vorhanden ist:
 
@@ -244,14 +291,7 @@ Befehl. Die Server bleiben danach gestartet.
 Testfixture der App bei geänderter Quelle anpassen, falls gewünscht:
 
 ```powershell
-Push-Location .\app
-try {
-    npm.cmd run data:generate
-    if ($LASTEXITCODE -ne 0) { throw 'Testfixture konnte nicht erzeugt werden.' }
-    npm.cmd run data:check
-} finally {
-    Pop-Location
-}
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\app\scripts\local.ps1 Snapshot
 ```
 
 Das erzeugt Testdaten, kein Offline-Verzeichnis der App. E-Mail-Vorschläge erst
