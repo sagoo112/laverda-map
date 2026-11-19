@@ -64,10 +64,16 @@ function Get-OwnedProcess([string]$Name) {
     $record = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
     $process = Get-Process -Id $record.Id -ErrorAction SilentlyContinue
     if ($null -eq $process) { return $null }
+    $recordedExecutable = $record.Executable
+    if ([string]::IsNullOrWhiteSpace($recordedExecutable)) {
+        # Older records could have a null Path immediately after Start-Process.
+        # Still require both the expected local binary and the original start time.
+        $recordedExecutable = if ($Name -eq 'api') { $phpExe } else { Join-Path $mariaBin 'mariadbd.exe' }
+    }
     $recordedStart = $record.StartedAt
     # PowerShell 7.5+ may deserialize ISO timestamps as DateTime; Windows PS 5.1 uses strings.
     if ($recordedStart -is [datetime]) { $recordedStart = $recordedStart.ToUniversalTime().ToString('o') }
-    if ($process.Path -ne $record.Executable -or
+    if (!$process.Path -or $process.Path -ne $recordedExecutable -or
         $process.StartTime.ToUniversalTime().ToString('o') -ne $recordedStart) {
         # A PID can be reused after a reboot. Ignore the stale record, never the other process.
         Write-Verbose "Ignoring a stale $Name process record."
@@ -76,8 +82,8 @@ function Get-OwnedProcess([string]$Name) {
     return $process
 }
 
-function Save-OwnedProcess([string]$Name, [Diagnostics.Process]$Process) {
-    $record = @{ Id = $Process.Id; Executable = $Process.Path;
+function Save-OwnedProcess([string]$Name, [Diagnostics.Process]$Process, [string]$Executable) {
+    $record = @{ Id = $Process.Id; Executable = $Executable;
         StartedAt = $Process.StartTime.ToUniversalTime().ToString('o') }
     [IO.File]::WriteAllText((Join-Path $StateDirectory ($Name + '-process.json')),
         ($record | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
@@ -138,11 +144,12 @@ function Start-LocalDatabase {
         }
     }
     $arguments = @(('--defaults-file="' + $iniPath + '"'), '--bind-address=127.0.0.1', '--port=3307', '--console')
-    $process = Start-Process -FilePath (Join-Path $mariaBin 'mariadbd.exe') -ArgumentList $arguments `
+    $executable = Join-Path $mariaBin 'mariadbd.exe'
+    $process = Start-Process -FilePath $executable -ArgumentList $arguments `
         -WorkingDirectory $StateDirectory -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput (Join-Path $StateDirectory 'mariadb-out.log') `
         -RedirectStandardError (Join-Path $StateDirectory 'mariadb-error.log')
-    Save-OwnedProcess 'mariadb' $process
+    Save-OwnedProcess 'mariadb' $process $executable
     for ($attempt = 0; $attempt -lt 60; $attempt++) {
         if (Test-LocalPort 3307) { [void](Invoke-LocalControl 'ping'); return }
         if ($process.HasExited) { throw 'MariaDB exited. See mariadb-error.log in the local state directory.' }
@@ -161,7 +168,7 @@ function Start-LocalApi {
             $process = Start-Process -FilePath $phpExe -ArgumentList $arguments -WorkingDirectory $projectRoot `
                 -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $StateDirectory 'api-out.log') `
                 -RedirectStandardError (Join-Path $StateDirectory 'api-error.log')
-            Save-OwnedProcess 'api' $process
+            Save-OwnedProcess 'api' $process $phpExe
         }
     }
     for ($attempt = 0; $attempt -lt 40; $attempt++) {

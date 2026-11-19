@@ -76,6 +76,21 @@ process.exit(17);
     $owned.Refresh(); $foreign.Refresh()
     Assert ($owned.HasExited -and !$foreign.HasExited) 'only owned Metro process tree stopped'
 
+    $apiRecord = Join-Path $StateDirectory 'api-process.json'
+    $phpExe = (Get-Process -Id $foreign.Id).Path
+    Save-OwnedProcess 'api' $foreign $phpExe
+    $record = Get-Content -LiteralPath $apiRecord -Raw | ConvertFrom-Json
+    Assert ($record.Executable -eq $phpExe -and $null -ne (Get-OwnedProcess 'api')) 'API process record uses the executable supplied at launch'
+    $record.Executable = $null
+    $record | ConvertTo-Json | Set-Content -LiteralPath $apiRecord
+    Assert ($null -ne (Get-OwnedProcess 'api')) 'API recovers a legacy record with a missing path for the expected executable'
+    $phpExe = Join-Path $scratch 'different.exe'
+    Assert ($null -eq (Get-OwnedProcess 'api')) 'API rejects a different executable when recovering a legacy record'
+    $phpExe = (Get-Process -Id $foreign.Id).Path
+    $record.StartedAt = '2000-01-01T00:00:00.0000000Z'
+    $record | ConvertTo-Json | Set-Content -LiteralPath $apiRecord
+    Assert ($null -eq (Get-OwnedProcess 'api')) 'API rejects a reused PID when recovering a legacy record'
+
     $script:deviceLines = @('List of devices attached', "fixture-phone`tdevice")
     $script:mappings = @{ 'tcp:8080' = 'tcp:8080' }
     $script:adbCalls = @()
