@@ -100,7 +100,7 @@ GOOGLE_MAPS_ANDROID_API_KEY=DEIN_BESTEHENDER_ANDROID_MAPS_SCHLUESSEL
 EXPO_PUBLIC_CONTACT_EMAIL=kontakt@example.org
 ```
 
-Beim Maps-Wert den bereits eingerichteten echten Schlüssel behalten. In Google Cloud muss er für **Maps SDK for Android**, `com.anonymous.laverdamap` und den SHA-1 der verwendeten Signatur freigegeben sein. `kontakt@example.org` ist vorerst ein sichtbarer Platzhalter; Mailentwürfe öffnen ohne Empfänger.
+Beim Maps-Wert den bereits eingerichteten echten Schlüssel behalten. In Google Cloud muss er für **Maps SDK for Android**, `ch.laverdaclub.map` und den SHA-1 der verwendeten Signatur freigegeben sein. `kontakt@example.org` ist vorerst ein sichtbarer Platzhalter; Mailentwürfe öffnen ohne Empfänger.
 
 Auf dem Handy bedeutet `127.0.0.1` das Handy selbst. Erst die USB-Weiterleitung aus Abschnitt 5 verbindet dessen Port 8080 mit dem PC. Die API-Adresse ohne `/health` oder `/api/v1/...` eintragen.
 

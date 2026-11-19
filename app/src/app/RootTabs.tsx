@@ -6,7 +6,7 @@ import ClubScreen from "../features/club/ClubScreen";
 import { Icon, type IconName } from "../shared/ui";
 import { colors } from "../shared/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useWindowDimensions } from "react-native";
+import { Platform, useWindowDimensions } from "react-native";
 
 export type RootTabsParamList = { Explore: undefined; Resources: undefined; Club: undefined };
 const Tab = createBottomTabNavigator<RootTabsParamList>();
@@ -20,6 +20,8 @@ export default function RootTabs() {
   const { fontScale } = useWindowDimensions();
   return (
     <Tab.Navigator
+      // Android MapView can lose its markers when an inactive tab is detached.
+      detachInactiveScreens={Platform.OS !== "android"}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarHideOnKeyboard: true,

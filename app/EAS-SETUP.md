@@ -108,9 +108,8 @@ App-Build-Variablen hinterlegen.
 
 ## 4. Android-Test bauen und Google Maps freigeben
 
-Die bisherige Android-Kennung bleibt `com.anonymous.laverdamap`. Vor einer ersten
-Store-Veröffentlichung bewusst entscheiden, ob dies die endgültige Kennung sein
-soll. Eine Änderung betrifft unter anderem Maps-Beschränkungen und App-Identität.
+Die Android-Kennung für den Play-Console-Eintrag und die Maps-Freigabe ist
+`ch.laverdaclub.map`.
 
 ```powershell
 npm run build:android:preview
@@ -136,7 +135,7 @@ In der [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 1. Das zum Maps-Schlüssel gehörige Projekt auswählen; **Maps SDK for Android**
    und die erforderliche Abrechnung müssen eingerichtet sein.
 2. Beim API-Schlüssel unter **Application restrictions → Android apps** die
-   Kombination aus `com.anonymous.laverdamap` und dem **SHA-1 des EAS-Keystores**
+   Kombination aus `ch.laverdaclub.map` und dem **SHA-1 des EAS-Keystores**
    hinzufügen. Bisher benötigte Einträge für lokale Builds erhalten.
 3. Unter **API restrictions** auf **Maps SDK for Android** einschränken.
 

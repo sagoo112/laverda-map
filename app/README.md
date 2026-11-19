@@ -43,7 +43,7 @@ Ungetrackte `.env.local` oder Build-Umgebung:
 | `GOOGLE_MAPS_ANDROID_API_KEY` | Auf Android-Paket und Signatur eingeschränkter Maps-SDK-Schlüssel           |
 | `EXPO_PUBLIC_CONTACT_EMAIL`   | Echte Empfängeradresse für Kontakt und Vorschläge                           |
 
-Diese Werte sind Client-Konfiguration, keine Serverpasswörter. Clubpasswort und DB-Zugang gehören niemals in `EXPO_PUBLIC_*`, App-Code oder Git. Android-ID: `com.anonymous.laverdamap`. iOS verwendet Apple Maps. Google Maps benötigt ein eingerichtetes Cloud-Projekt, Maps SDK for Android, passende Schlüsselbeschränkungen und gegebenenfalls Abrechnung.
+Diese Werte sind Client-Konfiguration, keine Serverpasswörter. Clubpasswort und DB-Zugang gehören niemals in `EXPO_PUBLIC_*`, App-Code oder Git. Die Android-Kennung lautet `ch.laverdaclub.map`. iOS verwendet Apple Maps. Google Maps benötigt ein eingerichtetes Cloud-Projekt, Maps SDK for Android, passende Schlüsselbeschränkungen und gegebenenfalls Abrechnung.
 
 Ohne Kontaktadresse steht sichtbar `kontakt@example.org`. Der Mail-Entwurf hat dann absichtlich keinen Empfänger. Erst nach Eintragen einer echten Adresse und Neustart/Neu-Bundling geht er an den Club.
 
