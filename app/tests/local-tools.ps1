@@ -11,6 +11,7 @@ $metroFile = Join-Path $scratch 'metro.json'
 $usbFile = Join-Path $scratch 'usb.json'
 $DeviceId = ''
 $SdkPath = ''
+$ClearCache = $false
 $checks = 0
 $workers = @()
 function Assert([bool]$Condition, [string]$Message) {
@@ -143,6 +144,11 @@ process.exit(17);
     Start-AppMetro
     Assert (!(Test-Path -LiteralPath $metroFile)) 'foreground process cleans up Metro ownership record'
     Assert ([Environment]::GetEnvironmentVariable('EXPO_PUBLIC_API_URL', 'Process') -eq $previousApi) 'local API override is not persisted'
+    $ClearCache = $true
+    [IO.File]::WriteAllText($expoCli, $fixtureCode.Replace('"8081"]', '"8081","--clear"]'), [Text.UTF8Encoding]::new($false))
+    Start-AppMetro
+    Assert (!(Test-Path -LiteralPath $metroFile)) 'Metro cache reset passes --clear and cleans up the ownership record'
+    $ClearCache = $false
 
     $originalAppRoot = $appRoot
     $appRoot = Join-Path $scratch 'setup-fixture'

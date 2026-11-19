@@ -237,6 +237,12 @@ Das betrifft Daemons derselben Gradle-Version und kann damit andere Android-Arbe
 
 ## 11. Häufige Fehler
 
+Bei `Unable to deserialize cloned data` kann Metro den gespeicherten Dateicache nicht lesen und sucht die Dateien selbst neu. Wenn danach `Metro waiting on …` erscheint und die App lädt, kannst du weiterarbeiten. Wiederholt sich die Meldung oder bleibt Metro beim Start hängen, beende Metro mit `Ctrl+C` und starte es im App-Ordner mit frischem Cache. Der erste Start dauert dann etwas länger. [Expo-Anleitung zum Metro-Cache](https://docs.expo.dev/troubleshooting/clear-cache-windows/)
+
+```powershell
+npm.cmd run local -- Start -ClearCache
+```
+
 | Meldung / Verhalten                                              | Nächster Schritt                                                                                                                                                                                                                             |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Could not find device with name: <Seriennummer>`                | Den aktuellen Helfer verwenden: Er ordnet die Seriennummer dem Expo-Gerätenamen zu. Für manuelle Expo-Aufrufe `--device` ohne Wert zur Auswahl verwenden, statt eine ADB-Seriennummer zu übergeben.                                          |

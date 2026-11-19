@@ -6,11 +6,13 @@ param(
     [string]$Action = 'Doctor',
     [string]$DeviceId,
     [string]$SdkPath,
-    [string]$StateDirectory
+    [string]$StateDirectory,
+    [switch]$ClearCache
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ($ClearCache -and $Action -ne 'Start') { throw '-ClearCache is only valid with Start.' }
 if ($env:OS -ne 'Windows_NT') { throw 'This helper is for Windows PowerShell. See LOCAL-DEVELOPMENT.md for other platforms.' }
 $appRoot = Split-Path -Parent $PSScriptRoot
 $projectRoot = Split-Path -Parent $appRoot
@@ -252,12 +254,15 @@ function Start-AppMetro {
     if (!(Get-LocalConfigStatus).mapsConfigured) { throw 'Add GOOGLE_MAPS_ANDROID_API_KEY to .env.local first.' }
     $existing = Get-OwnedMetro
     if ($null -eq $existing -and (Test-MetroPort)) { throw 'Port 8081 belongs to another/unrecorded server. It will not be replaced.' }
+    if ($ClearCache -and $null -ne $existing) { throw 'Stop the running Metro with Ctrl+C or local.ps1 Stop, then retry Start -ClearCache.' }
     [void](Connect-LocalPhone)
     if ($null -ne $existing) { Write-Host 'This project Metro is already running.'; return }
     $node = Get-Tool 'node.exe'
     Use-AppEnvironment @{ ANDROID_HOME = (Get-AndroidSdk); ANDROID_SDK_ROOT = (Get-AndroidSdk); EXPO_PUBLIC_API_URL = 'http://127.0.0.1:8080'; EXPO_PACKAGER_PROXY_URL = 'http://127.0.0.1:8081'; EXPO_NO_DOTENV = $null } {
         # Metro is interactive: reuse this console so the user can press a/r/Ctrl+C.
-        $process = Start-Process -FilePath $node -ArgumentList @(('"' + $expoCli + '"'), 'start', '--dev-client', '--localhost', '--port', '8081') -WorkingDirectory $appRoot -NoNewWindow -PassThru
+        $arguments = @(('"' + $expoCli + '"'), 'start', '--dev-client', '--localhost', '--port', '8081')
+        if ($ClearCache) { $arguments += '--clear' }
+        $process = Start-Process -FilePath $node -ArgumentList $arguments -WorkingDirectory $appRoot -NoNewWindow -PassThru
         # Cache the handle: Windows PowerShell 5.1 may otherwise lose ExitCode after exit.
         $null = $process.Handle
         try {
