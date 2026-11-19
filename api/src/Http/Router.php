@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace LaverdaApi\Http;
 
+use LaverdaApi\Config;
+
 final class Router
 {
     public static function dispatch(): never
@@ -37,6 +39,10 @@ final class Router
 
         if ($path === '/health') {
             HealthHandler::handle();
+        }
+
+        if ($path === '/api/v1/public/laverda/places' && Config::playTestDirectoryEnabled()) {
+            PlacesHandler::handle('laverda', null, true);
         }
 
         $tenantSlug = null;

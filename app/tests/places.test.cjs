@@ -12,7 +12,7 @@ const {
 } = require("../src/features/places/model.ts");
 const { webUrl } = require("../src/shared/urls.ts");
 const { groupMapPlaces } = require("../src/features/places/mapGroups.ts");
-const source = require("./fixtures/places.generated.json");
+const source = require("../src/data/places.json");
 const seed = require("../../api/places.json");
 
 test("co-located club and workshops share one map marker led by the club", () => {

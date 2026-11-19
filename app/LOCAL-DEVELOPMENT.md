@@ -24,7 +24,7 @@ npm.cmd run local -- Doctor
 | Automatische Prüfungen       | `npm.cmd run local -- Check`      | TypeScript, Lint, Tests, Formatierung und Expo-Paketprüfung, ohne API-/Metro-Start.                              |
 | Bundles prüfen               | `npm.cmd run local -- Export`     | Erzeugt Android-/iOS-JavaScript-Bundles in `dist`, keine installierbare APK.                                     |
 | Alles prüfen und exportieren | `npm.cmd run local -- Verify`     | Führt `Check` und danach `Export` aus; bei Fehlern wird abgebrochen.                                             |
-| Testdaten aktualisieren      | `npm.cmd run local -- Snapshot`   | Erzeugt die Testfixture aus `api/places.json` und prüft anschliessend ihre Übereinstimmung.                      |
+| Ortsliste aktualisieren      | `npm.cmd run local -- Snapshot`   | Erzeugt die mitgelieferte Liste aus den freigegebenen Einträgen in `api/places.json`.                            |
 | Gradle beenden               | `npm.cmd run local -- GradleStop` | Führt im generierten Android-Projekt `gradlew --stop` aus. Betrifft Daemons derselben Gradle-Version.            |
 | Laufzustand                  | `npm.cmd run local -- Status`     | Zeigt eigenen Metro-Prozess, Portbelegung und gespeicherte USB-Zuordnungen.                                      |
 | App-Werkzeuge stoppen        | `npm.cmd run local -- Stop`       | Beendet nur den aufgezeichneten Metro-Prozess samt seinen Workern und entfernt selbst angelegte USB-Zuordnungen. |
@@ -60,7 +60,7 @@ Android-Handy → USB / adb reverse → Metro :8081
 
 | Bestandteil         | Zweck                                       | Fenster                                   |
 | ------------------- | ------------------------------------------- | ----------------------------------------- |
-| API und MariaDB     | Anmeldung, Sitzungen und Ortsdaten          | Fenster 1 steuert die Hintergrundprozesse |
+| API und MariaDB     | Ortsdaten für den Online-Modus              | Fenster 1 steuert die Hintergrundprozesse |
 | Metro               | Liefert JavaScript an den Development Build | Fenster 2 bleibt offen                    |
 | Android-Build / adb | Baut, installiert und verbindet die App     | Fenster 3 für Befehle                     |
 
@@ -104,18 +104,21 @@ Beim Maps-Wert den bereits eingerichteten echten Schlüssel behalten. In Google 
 
 Auf dem Handy bedeutet `127.0.0.1` das Handy selbst. Erst die USB-Weiterleitung aus Abschnitt 5 verbindet dessen Port 8080 mit dem PC. Die API-Adresse ohne `/health` oder `/api/v1/...` eintragen.
 
-DB-Passwörter und Clubpasswort gehören niemals in App-Konfiguration oder `EXPO_PUBLIC_*`: Client-Werte sind aus einem Build lesbar. Die API prüft die Passphrase und gibt der App nur ein Sitzungstoken.
+Client-Werte sind aus einem Build lesbar. DB-Passwörter und Clubpasswort gehören in die Serverkonfiguration.
 
 Eine geänderte API-Adresse erfordert einen Metro-Neustart. Änderungen an Maps-Schlüssel, Icon, nativen Plugins oder Paketen brauchen zusätzlich einen neuen nativen Build. Falls in deinem Terminal `EXPO_NO_DOTENV=1` gesetzt ist, wird `.env.local` nicht geladen; diese bewusst gesetzte Testoption vor normaler Entwicklung entfernen.
 
 ## 4. Fenster 1: API und Datenbank starten
 
+Für die mitgelieferte Liste kannst du direkt zu Schritt 5 gehen. Für den Test der Online-Datenquelle starte die lokale API mit freigegebener Leseroute.
+
 ```powershell
 Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app"
+$env:PLAY_TEST_PUBLIC_DIRECTORY = '1'
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Start
 ```
 
-Der Startbefehl wartet selbst auf `Healthy`. Den Komponentenstatus zusätzlich anzeigen mit `api/scripts/local.ps1 Health`. Ohne eingerichtetes Clubpasswort kann Health trotzdem gesund sein, während die Anmeldung gesperrt bleibt. Passwort einmalig gemäss [API-Anleitung](../api/LOCAL-DEVELOPMENT.md) setzen; der Tagesstart setzt es nicht neu.
+Der Startbefehl wartet auf `Healthy`. Falls die lokale API schon läuft, starte sie mit `Restart` anstelle von `Start`, damit sie die Einstellung übernimmt.
 
 ## 5. Fenster 2: USB-Verbindung und Metro
 
@@ -132,7 +135,7 @@ USB-Ports verbinden und Metro starten:
 npm.cmd run local -- Start
 ```
 
-**Warum zwei Weiterleitungen:** 8080 liefert Daten und Anmeldung, 8081 den App-Code. Der Helfer setzt beide `adb reverse`-Zuordnungen und wählt ein einziges autorisiertes Gerät. Bei mehreren Geräten `-DeviceId` mit der Seriennummer aus `Devices` ergänzen. Nach erneutem Anschliessen `Connect` ausführen; wenn Metro gestoppt ist, genügt erneut `Start`. Für diesen Ablauf ist kein gemeinsames WLAN nötig.
+8080 liefert die API-Daten, 8081 den App-Code. Der Helfer setzt beide `adb reverse`-Zuordnungen und wählt ein einziges autorisiertes Gerät. Bei mehreren Geräten `-DeviceId` mit der Seriennummer aus `Devices` ergänzen. Nach erneutem Anschliessen `Connect` ausführen. Falls Metro gestoppt ist, erneut `Start` ausführen.
 
 Das Metro-Fenster offen lassen. Ist der aktuelle Development Build bereits installiert und gab es keine nativen Änderungen, hier `a` drücken und dein Handy auswählen. Bei der Serverauswahl des Developer-Clients den Metro-Server `http://127.0.0.1:8081` öffnen beziehungsweise auswählen.
 
@@ -165,13 +168,11 @@ Ein neues Launcher-Icon erscheint erst mit der neu installierten APK; JavaScript
 
 ## 7. Auf dem Handy testen
 
-1. App öffnen: vor der Anmeldung muss das Verzeichnis verborgen sein.
-2. Ein falsches Clubpasswort testen: keine Freischaltung. Nicht ständig wiederholen; die API begrenzt Anmeldeversuche.
-3. Mit dem lokalen Clubpasswort anmelden, Liste und Suche prüfen.
-4. Karte zoomen/verschieben und Marker öffnen; Club-Marker zeigen das Laverda-Logo.
-5. Favorit setzen, App erneut öffnen und nach Sitzungsprüfung kontrollieren.
-6. Vorschlagsformular ausfüllen, Mailentwurf öffnen und zur App zurückkehren. Formularzustand prüfen; nichts wird automatisch versendet oder veröffentlicht.
-7. Abmelden: Verzeichnis muss wieder gesperrt sein.
+1. App öffnen und Liste und Suche mit der mitgelieferten Ortsliste prüfen.
+2. Karte zoomen, verschieben und Marker öffnen. Club-Marker zeigen das Laverda-Logo.
+3. Favorit setzen und nach dem Neustart kontrollieren.
+4. Falls die lokale API läuft, unter **Club → Settings → Use online API** umschalten. Prüfen, dass die Auswahl nach einem Neustart erhalten bleibt, und wieder zur lokalen Liste wechseln.
+5. Vorschlagsformular ausfüllen, Mailentwurf öffnen und zur App zurückkehren. Formularzustand prüfen.
 
 **Lokale Datenquelle prüfen:** Die API-Anleitung enthält einen angemeldeten Abruf direkt aus MariaDB. `.env.local` muss auf die lokale Origin zeigen. Die App enthält keine eingebauten Offline-Ortsdaten mehr; bereits geladene Daten können während einer Sitzung aber im Arbeitsspeicher liegen. Eine sichtbare Liste allein beweist deshalb keinen neuen Abruf. App aktualisieren beziehungsweise erneut öffnen und parallel in einem zusätzlichen Fenster das Log beobachten:
 
@@ -248,12 +249,12 @@ npm.cmd run local -- Start -ClearCache
 | `Could not find device with name: <Seriennummer>`                | Den aktuellen Helfer verwenden: Er ordnet die Seriennummer dem Expo-Gerätenamen zu. Für manuelle Expo-Aufrufe `--device` ohne Wert zur Auswahl verwenden, statt eine ADB-Seriennummer zu übergeben.                                          |
 | `--port and --no-bundler are mutually exclusive`                 | `--port` beim `run:android` weglassen; nur Metro bekommt `--port 8081`.                                                                                                                                                                      |
 | `NoRouteToHost`, `unexpected end of stream`, leere Serverauswahl | API-Health und fertigen Metro-Start prüfen. Richtige Seriennummer und beide USB-Weiterleitungen kontrollieren, dann erneut `a` bei Metro. Keine alte WLAN-IP verwenden.                                                                      |
-| Health gut, Anmeldung scheitert                                  | API-Adresse und gesetztes Clubpasswort prüfen. Health ist keine erfolgreiche Anmeldung.                                                                                                                                                      |
+| Health gut, Online-Verzeichnis fehlt                             | API-Adresse und Freigabe der Leseroute aus Schritt 4 prüfen.                                                                                                                                                                                 |
 | Karte leer                                                       | Maps SDK, Abrechnung, Paketname, SHA-1 und Schlüsselbeschränkungen prüfen. Neuer Schlüssel braucht neuen nativen Build.                                                                                                                      |
 | `Cannot find native module`                                      | Nach nativen Paketänderungen neu bauen/installieren; eine alte APK oder Expo Go reichen nicht.                                                                                                                                               |
 | Icon bleibt alt                                                  | Prebuild und neue APK installieren. Launcher können Icons zwischenspeichern.                                                                                                                                                                 |
 | OneDrive meldet vorhandene Dateien als fehlend; Pfade zu lang    | Vollständige Arbeitskopie mit kurzem Pfad ausserhalb OneDrive verwenden und Abhängigkeiten frisch installieren. Nötige App-Konfiguration privat übernehmen; für die API einen eigenen lokalen Zustandsordner gemäss API-Anleitung verwenden. |
-| Signatur passt nicht zur installierten App                       | Lokale Debug- und EAS-Signatur vergleichen. Nicht vorschnell deinstallieren: dabei gehen Favoriten und Anmeldung verloren.                                                                                                                   |
+| Signatur passt nicht zur installierten App                       | Lokale Debug- und EAS-Signatur vergleichen. Eine Deinstallation löscht Favoriten und die gewählte Datenquelle.                                                                                                                               |
 
 Weitere Quellen: [Expo CLI](https://docs.expo.dev/more/expo-cli/), [native Projektgenerierung](https://docs.expo.dev/workflow/continuous-native-generation/), [Android Debug Bridge](https://developer.android.com/tools/adb).
 

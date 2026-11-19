@@ -1,10 +1,10 @@
 # Mobile Laverda-App
 
-Expo SDK 57, React Native 0.86, React 19 und TypeScript. Die App spricht ausschliesslich mit der PHP-API über HTTPS; sie enthält keine Datenbank-Zugangsdaten.
+Expo SDK 57, React Native 0.86, React 19 und TypeScript.
 
 ## Funktionen
 
-- Clubpasswort-Abfrage vor dem Verzeichnis, geschützte serverseitige Sitzungen und Abmeldung.
+- Die Play-Store-Testversion öffnet das Verzeichnis ohne Anmeldung mit mitgelieferten Daten.
 - Explore mit Karte/Liste, gemeinsamer Suche, Filtern, Favoriten und optionaler Entfernungssortierung.
 - Club-Marker verwenden das Laverda-Logo; andere Kategorien behalten ihre eigenen Symbole. Nur tatsächliche/ungefähre Zielorte erhalten Marker; Länderzentren und Online-Ressourcen bleiben in der Liste.
 - Resources für Blogs, Foren und Register; Club-Seite mit Kontakt und Eintragsvorschlägen.
@@ -37,25 +37,21 @@ Android-Test nach der Einrichtung `npm run build:android:preview` verwenden.
 
 Ungetrackte `.env.local` oder Build-Umgebung:
 
-| Variable                      | Bedeutung                                                             |
-| ----------------------------- | --------------------------------------------------------------------- |
-| `EXPO_PUBLIC_API_URL`         | API-Origin, z. B. `https://api.laverdaclub.ch`, ohne angehängte Route |
-| `GOOGLE_MAPS_ANDROID_API_KEY` | Auf Android-Paket und Signatur eingeschränkter Maps-SDK-Schlüssel     |
-| `EXPO_PUBLIC_CONTACT_EMAIL`   | Echte Empfängeradresse für Kontakt und Vorschläge                     |
+| Variable                      | Bedeutung                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_API_URL`         | Optionale API-Origin ohne Route. Standard ist `https://api.laverdaclub.ch`. |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Auf Android-Paket und Signatur eingeschränkter Maps-SDK-Schlüssel           |
+| `EXPO_PUBLIC_CONTACT_EMAIL`   | Echte Empfängeradresse für Kontakt und Vorschläge                           |
 
 Diese Werte sind Client-Konfiguration, keine Serverpasswörter. Clubpasswort und DB-Zugang gehören niemals in `EXPO_PUBLIC_*`, App-Code oder Git. Android-ID: `com.anonymous.laverdamap`. iOS verwendet Apple Maps. Google Maps benötigt ein eingerichtetes Cloud-Projekt, Maps SDK for Android, passende Schlüsselbeschränkungen und gegebenenfalls Abrechnung.
 
-Ohne Kontaktadresse steht sichtbar `kontakt@example.org`. Der Mail-Entwurf hat dann absichtlich keinen Empfänger. Erst nach Eintragen einer echten Adresse und Neustart/Neu-Bundling geht er an den Club. Zugang ohne konfigurierte API ist nicht möglich.
+Ohne Kontaktadresse steht sichtbar `kontakt@example.org`. Der Mail-Entwurf hat dann absichtlich keinen Empfänger. Erst nach Eintragen einer echten Adresse und Neustart/Neu-Bundling geht er an den Club.
 
-## Anmeldung und lokale Daten
+## Datenquelle
 
-1. Die App sendet das eingegebene Clubpasswort an den Tenant-Login-Endpunkt.
-2. Nach Prüfung des DB-Hashes stellt der Server ein zufälliges Token mit maximal 24 Stunden Gültigkeit aus.
-3. Nur das Token wird nativ in Expo SecureStore gespeichert; auf Web bleibt es ausschliesslich im Arbeitsspeicher.
-4. Bei Neustart und Rückkehr aus dem Hintergrund wird die Sitzung online geprüft; bis dahin ist das Verzeichnis verborgen. Im Vordergrund wird sie zusätzlich minütlich überprüft, ohne Formularzustände bei erfolgreicher Prüfung zurückzusetzen.
-5. Ablauf, Abmeldung und HTTP 401 sperren die App. Ein Passwortwechsel widerruft serverseitig bestehende Sitzungen. Ohne Verbindung zur Sitzungsprüfung bleibt sie gesperrt.
+Unter **Club → Settings → Use online API** lässt sich zwischen der lokalen `places.json` und der API umschalten. Standard ist die lokale Liste. Für den Online-Modus muss die [Leseroute auf der API freigegeben](../api/README.md#online-modus-der-play-store-testversion) sein. Bei fehlender Verbindung lässt sich jederzeit auf die lokale Liste zurückschalten.
 
-Keine Runtime-Imports von `places.json` oder Testfixtures. Verzeichnisantworten werden nur im Arbeitsspeicher gehalten; kein persistenter Daten-Cache. Alte `laverda:places:*`-Caches werden entfernt. Favoriten enthalten nur IDs und bleiben lokal. Bereits erhaltene/kopierte Informationen lassen sich nicht nachträglich geheim machen. Das gemeinsame Passwort bietet keine individuelle Mitgliederverwaltung; für getrennte Sperrung einzelner Mitglieder wären persönliche Konten erforderlich.
+Die mitgelieferte `src/data/places.json` entsteht aus den Einträgen mit `visibility=public` in `api/places.json`. Nach redaktionellen Änderungen `npm.cmd run data:generate` ausführen und einen neuen App-Build erstellen. Die App speichert Favoriten-IDs und die Quellenwahl auf dem Gerät. API-Antworten bleiben im Arbeitsspeicher.
 
 HTTPS ist in produktiven Builds erforderlich. Klartext-HTTP dient nur der lokalen Entwicklung. Beim Android-USB-Test werden API und Metro mit `adb reverse tcp:8080 tcp:8080` und `adb reverse tcp:8081 tcp:8081` erreicht; die API-Origin ist dann `http://127.0.0.1:8080`. Der Entwicklungsserver bleibt ein separates Werkzeug.
 
@@ -73,12 +69,12 @@ Das App-Icon ist in `app.json` konfiguriert: `assets/laverda-app-icon.png` (1024
 
 ```text
 src/app/               Provider und Navigation
-src/features/auth/     Anmeldung, geschützte Sitzung und Zugangssperre
+src/data/              Mitgelieferte Ortsliste
+src/features/auth/     Anmeldung für Builds mit Clubpasswort
 src/features/places/   DTO-Schema, Datenabruf, Karte, Liste, Details und Favoriten
 src/features/club/     Clubseite, Kontakt und Vorschlagsformular
 src/features/resources/ Online-Verzeichnis
 src/shared/            HTTP-Client, Designsystem und sichere Links
-tests/fixtures/        Nur Testdaten; kein Runtime-Import
 ```
 
 ## Prüfungen
@@ -87,6 +83,6 @@ tests/fixtures/        Nur Testdaten; kein Runtime-Import
 npm.cmd run local -- Verify
 ```
 
-`Verify` bündelt TypeScript, Lint, Tests, Formatierung, Expo-Paketprüfung und Bundle-Export. `npm.cmd run local -- Snapshot` erzeugt und prüft die Testfixture aus `api/places.json`; es importiert keine Datenbank und ändert keine Runtime-Daten. Für den optionalen Live-Vertragstest müssen `LAVERDA_TEST_API_URL` und ein kurzlebiges `LAVERDA_TEST_TOKEN` für eine frisch importierte Testdatenbank gesetzt sein. Geheimnisse nicht in Befehlsargumente oder Git schreiben. Komponentenprüfungen mocken native Module; echte Maps-, SecureStore- und Mail-Interaktion muss auf einem Gerät geprüft werden. Der Maestro-Smoke-Test verwendet einen vorbereiteten Testzugang und löscht den Zustand der Testinstallation.
+`Verify` bündelt TypeScript, Lint, Tests, Formatierung, Expo-Paketprüfung und Bundle-Export. `npm.cmd run local -- Snapshot` aktualisiert die mitgelieferte Ortsliste. Für den optionalen Live-Vertragstest der geschützten API müssen `LAVERDA_TEST_API_URL` und ein kurzlebiges `LAVERDA_TEST_TOKEN` für eine frisch importierte Testdatenbank gesetzt sein. Komponentenprüfungen verwenden Ersatzmodule für native Funktionen. Der Maestro-Smoke-Test löscht den Zustand der Testinstallation und prüft die lokale Liste.
 
 Sicherheitsstand der npm-Abhängigkeiten am 18.11.2026: kompatible Updates für `shell-quote` und `zod` sind enthalten. `npm audit` meldet weiterhin 6 moderate und 62 hohe Meldungen im Abhängigkeitsbaum, keine kritische. Die angebotenen umfassenden Fixes enthalten inkompatible Expo-/React-Native-Downgrades; diese wurden nicht erzwungen. Vor einer Veröffentlichung erneut prüfen und mit einem unterstützten SDK-Upgrade abarbeiten. Erfolgreiche Funktionstests bedeuten keinen vollständig bereinigten Sicherheits-Audit.

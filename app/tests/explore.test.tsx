@@ -1,15 +1,22 @@
 import React from "react";
-import { cleanup, render, screen, userEvent, waitFor } from "@testing-library/react-native";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { PlacesProvider } from "../src/features/places/PlacesProvider";
+import { PlacesProvider, placesSourceKey } from "../src/features/places/PlacesProvider";
 import ExploreScreen from "../src/features/places/ExploreScreen";
 import ResourcesScreen from "../src/features/resources/ResourcesScreen";
 import ClubScreen from "../src/features/club/ClubScreen";
 import { Alert } from "react-native";
 import * as Location from "expo-location";
-import source from "./fixtures/places.generated.json";
+import source from "../src/data/places.json";
 import { requestJson } from "../src/shared/api";
 import { favoritesKey } from "../src/features/places/cache";
 import type { PlacesMapProps } from "../src/features/places/PlacesMap";
@@ -19,7 +26,6 @@ jest.mock("../src/shared/api", () => ({
   API_URL: "https://api.test.invalid",
   requestJson: jest.fn(),
 }));
-jest.mock("../src/features/auth/AuthProvider", () => ({ useAuth: () => ({ signOut: jest.fn() }) }));
 jest.mock("../src/features/club/mail", () => ({ prepareEmail: jest.fn() }));
 jest.mock("@react-navigation/native", () => ({ useFocusEffect: () => {} }));
 let mockMapAvailable = false;
@@ -72,20 +78,13 @@ afterEach(async () => {
 async function mount(child: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   clients.push(client);
-  const result = await render(
+  return render(
     <SafeAreaProvider initialMetrics={metrics}>
       <QueryClientProvider client={client}>
         <PlacesProvider>{child}</PlacesProvider>
       </QueryClientProvider>
     </SafeAreaProvider>,
   );
-  await waitFor(() =>
-    expect(
-      client.getQueryData<{ fetchedAt: string }>(["places", "laverda", "https://api.test.invalid"])
-        ?.fetchedAt,
-    ).toBeTruthy(),
-  );
-  return result;
 }
 beforeEach(async () => {
   mockMapAvailable = false;
@@ -103,13 +102,15 @@ test("a shared map marker offers both entries and opens the chosen details", asy
   jest.mocked(requestJson).mockResolvedValue({
     entries: [{ ...club, location: workshop.location }, workshop],
   });
+  await AsyncStorage.setItem(placesSourceKey, "api");
   const user = userEvent.setup();
   await mount(<ExploreScreen />);
+  const marker = await screen.findByRole("button", { name: "2 entries on map" });
   for (const [place, category] of [
     [workshop, "Workshops"],
     [club, "Clubs"],
   ] as const) {
-    await user.press(screen.getByRole("button", { name: "2 entries on map" }));
+    await user.press(marker);
     expect(screen.getByRole("header", { name: "2 places here" })).toBeTruthy();
     await user.press(screen.getByRole("button", { name: `${place.name}, ${category}` }));
     expect(screen.getByRole("header", { name: place.name })).toBeTruthy();
@@ -117,7 +118,7 @@ test("a shared map marker offers both entries and opens the chosen details", asy
     await user.press(screen.getByRole("button", { name: "Close place details" }));
   }
 });
-test("authenticated API directory supports search and saved filtering", async () => {
+test("local directory supports search and saved filtering without signing in", async () => {
   const user = userEvent.setup();
   await mount(<ExploreScreen />);
   expect(screen.queryByText(/password/i)).toBeNull();
@@ -197,4 +198,17 @@ test("Club privacy information can be expanded without leaving the page", async 
   await user.press(screen.getByRole("button", { name: "Offline & privacy" }));
   expect(screen.getByText(/Location is optional/)).toBeTruthy();
   expect(screen.getByRole("button", { name: "Offline & privacy", expanded: true })).toBeTruthy();
+});
+
+test("Club settings switch from local data to the API and back", async () => {
+  await mount(<ClubScreen />);
+  const name = "Use online API";
+  const localSwitch = await screen.findByRole("switch", { name, checked: false, disabled: false });
+  expect(screen.getByText("Using local places.json")).toBeTruthy();
+  expect(requestJson).not.toHaveBeenCalled();
+  await fireEvent(localSwitch, "valueChange", true);
+  const onlineSwitch = await screen.findByRole("switch", { name, checked: true });
+  await waitFor(() => expect(requestJson).toHaveBeenCalledTimes(1));
+  await fireEvent(onlineSwitch, "valueChange", false);
+  expect(screen.getByText("Using local places.json")).toBeTruthy();
 });

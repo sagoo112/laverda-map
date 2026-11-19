@@ -191,6 +191,12 @@ try {
     check(request('/api/places')['status'] === 401, 'anonymous legacy data blocked');
     check(request('/api/v1/tenants/laverda/places')['status'] === 401, 'anonymous versioned data blocked');
     check(request('/api/places/unknown', etag: '*')['status'] === 401, 'ETag cannot bypass authentication');
+    $playTestRoute = '/api/v1/public/laverda/places';
+    $playTestEnabled = getenv('PLAY_TEST_PUBLIC_DIRECTORY') === '1';
+    $playTest = request($playTestRoute);
+    check($playTest['status'] === ($playTestEnabled ? 200 : 404), 'play test collection requires explicit opt-in');
+    check(request($playTestRoute, 'POST')['status'] === 405, 'play test collection is read-only');
+    check(request('/api/v1/public/other-club/places')['status'] === 404, 'no public route for other tenants');
     check(setClubPassword('laverda', $password) === 0, 'CLI creates a club password');
     check(password_verify($password, $pdo->query("SELECT access_password_hash FROM tenants WHERE slug = 'laverda'")->fetchColumn()), 'database stores a verified password hash');
     $login = request('/api/v1/tenants/laverda/auth/login', 'POST', json_encode(['password' => $password]));
@@ -207,6 +213,9 @@ try {
     check(str_contains($collection['headers'], 'Cache-Control: private, no-store'), 'public data revalidates');
     $entries = $collection['body']['entries'];
     check(count($entries) === 43, 'collection count');
+    if ($playTestEnabled) {
+        check($playTest['body'] === $collection['body'], 'anonymous play test reads the live public collection');
+    }
     check(request('/api/places')['body'] === $collection['body'], 'legacy contract');
     check(request('/api/v1/tenants/laverda/places')['body'] === $collection['body'], 'deterministic order');
     check(count(array_unique(array_column($entries, 'id'))) === 43, 'unique IDs');
@@ -248,12 +257,18 @@ try {
         check(count(request('/api/places')['body']['entries']) === 42, 'nonpublic collection exclusion');
         check(request('/api/places/' . $id)['status'] === 404, 'nonpublic detail exclusion');
         check(request('/api/places', etag: $etag)['status'] === 200, 'visibility change invalidates ETag');
+        if ($playTestEnabled) {
+            check(count(request($playTestRoute)['body']['entries']) === 42, 'play test excludes nonpublic places');
+        }
     }
     $setVisibility->execute(['public', $tenant['id'], $entries[0]['id']]);
     $pdo->exec("UPDATE tenants SET is_active = 0 WHERE slug = 'laverda'");
     check(request('/api/places')['status'] === 401, 'inactive tenant collection');
     check(request('/api/places/' . $id)['status'] === 401, 'inactive tenant detail');
     check(request('/api/places', etag: $etag)['status'] === 401, 'ETag never bypasses tenant visibility');
+    if ($playTestEnabled) {
+        check(request($playTestRoute)['status'] === 404, 'play test excludes inactive tenant');
+    }
     $pdo->exec("UPDATE tenants SET is_active = 1 WHERE slug = 'laverda'");
     $pdo->exec("INSERT INTO tenants (slug, name) VALUES ('other-club', 'Other club')");
     $otherId = $pdo->lastInsertId();

@@ -104,6 +104,12 @@ Alte `/api/places`-Routen sind ebenfalls geschützt. `/auth/unlock` ist nur ein 
 
 Der Ortsvertrag bleibt gleich. Filter `type`, `country`, `q` bleiben erhalten, Reihenfolge bleibt deterministisch. Nur `visibility=public` wird im authentifizierten Verzeichnis angezeigt; hidden/private/null bleiben ausgeschlossen. Ohne/mit ungültiger, abgelaufener, widerrufener oder fremdem Tenant zugeordneter Sitzung: HTTP 401. Mit gültiger Sitzung unbekannte/nonpublic Orts-ID: 404. Fehlerhafte Eingaben: 400, zu grosser Login-Body: 413, falsche Methode: 405, Versuchslimit: 429.
 
+### Online-Modus der Play-Store-Testversion
+
+Die Test-App liest im Online-Modus `GET /api/v1/public/laverda/places`. Nach Migration und Datenimport kann der Webmaster diese Route mit der Servervariable `PLAY_TEST_PUBLIC_DIRECTORY=1` oder in der privaten `config.local.php` mit `'PLAY_TEST_PUBLIC_DIRECTORY' => '1'` aktivieren. In der Standardeinstellung antwortet die Route mit HTTP 404.
+
+Bei Freigabe kann jeder die als `public` markierten Laverda-Einträge über diese Route lesen. Vor der Freigabe bitte die Einträge auf ihre Eignung zur öffentlichen Weitergabe prüfen.
+
 Login auf nichtlokalen Verbindungen verlangt HTTPS. Token bestehen aus 32 zufälligen Bytes und gelten maximal 24 Stunden; der Server speichert nur deren SHA-256. Zehn Anmeldeversuche je IP/Tenant in 15 Minuten, dann begrenzte Sperre; erfolgreiche Anmeldung setzt den Zähler zurück. Passwortwechsel und Tenant-Deaktivierung sperren bestehende Sitzungen. Geschützte Antworten sind `private, no-store`; ETags umgehen die Auth-Prüfung nicht. Proxy-/Webserver müssen den Authorization-Header erhalten. Bestehende veröffentlichte Daten oder alte Client-Kopien können nicht zurückgerufen werden.
 
 ## Statusseite und Monitoring

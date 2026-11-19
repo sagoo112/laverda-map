@@ -2,10 +2,6 @@ appId: ${APP_ID}
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Welcome to Laverda"
-- tapOn: "Club password"
-- inputText: "${CLUB_PASSWORD}"
-- tapOn: "Sign in"
 - assertVisible:
     id: "explore-heading"
 - tapOn:

@@ -3,7 +3,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { parseEntries } = require("../src/features/places/schema.ts");
 const { normalizePlaces } = require("../src/features/places/model.ts");
-const snapshot = require("./fixtures/places.generated.json");
+const snapshot = require("../src/data/places.json");
 test(
   "live PHP/MariaDB response matches the generated mobile contract",
   { skip: !process.env.LAVERDA_TEST_API_URL || !process.env.LAVERDA_TEST_TOKEN },

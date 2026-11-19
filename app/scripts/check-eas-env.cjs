@@ -8,9 +8,10 @@ if (!profile || !platform) {
   process.exit(1);
 }
 
-if (profile !== "development") {
+const apiOrigin = process.env.EXPO_PUBLIC_API_URL?.trim();
+if (profile !== "development" && apiOrigin) {
   try {
-    const url = new URL(process.env.EXPO_PUBLIC_API_URL?.trim() ?? "");
+    const url = new URL(apiOrigin);
     if (
       url.protocol !== "https:" ||
       url.username ||
@@ -24,7 +25,7 @@ if (profile !== "development") {
     }
   } catch {
     problems.push(
-      "EXPO_PUBLIC_API_URL must be a public HTTPS origin without a route or credentials.",
+      "If set, EXPO_PUBLIC_API_URL must be a public HTTPS origin without a route or credentials.",
     );
   }
 }

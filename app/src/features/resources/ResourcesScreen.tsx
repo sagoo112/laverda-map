@@ -13,7 +13,7 @@ import { EmptyState, SearchField } from "../../shared/ui";
 import { space, ui } from "../../shared/theme";
 
 export default function ResourcesScreen() {
-  const { places, loading, refresh } = usePlaces();
+  const { places, loading, refresh, source } = usePlaces();
   const insets = useSafeAreaInsets();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -76,7 +76,7 @@ export default function ResourcesScreen() {
         data={results}
         keyExtractor={(place) => place.id}
         refreshing={loading}
-        onRefresh={refresh}
+        onRefresh={source === "api" ? refresh : undefined}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={[ui.content, { paddingTop: space.xs }]}

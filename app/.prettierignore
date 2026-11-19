@@ -5,5 +5,5 @@ ios
 .claude
 .vscode
 dist
-tests/fixtures
+src/data/places.json
 package-lock.json

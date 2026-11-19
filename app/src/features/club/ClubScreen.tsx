@@ -1,19 +1,17 @@
 import React, { useState } from "react";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlaces } from "../places/PlacesProvider";
 import PlacesStatus from "../places/PlacesStatus";
 import { Button, Icon, TextAction } from "../../shared/ui";
 import { colors, space, ui } from "../../shared/theme";
 import { openWebsite } from "../../shared/links";
-import { useAuth } from "../auth/AuthProvider";
 import ProposalForm from "./ProposalForm";
 import { contactConfigured, contactEmail } from "./proposal";
 import { prepareEmail } from "./mail";
 
 export default function ClubScreen() {
-  const { signOut } = useAuth();
-  const { places } = usePlaces();
+  const { places, source, sourceReady, setSource } = usePlaces();
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [proposalOpen, setProposalOpen] = useState(false);
   const insets = useSafeAreaInsets();
@@ -91,6 +89,26 @@ export default function ClubScreen() {
         {proposalOpen && <ProposalForm onClose={() => setProposalOpen(false)} />}
       </View>
       <View style={ui.section}>
+        <Text accessibilityRole="header" style={ui.heading}>
+          Settings
+        </Text>
+        <View style={ui.row}>
+          <View style={styles.sourceLabel}>
+            <Text style={ui.body}>Use online API</Text>
+            <Text style={ui.caption}>
+              {source === "api" ? "Requires internet access" : "Using local places.json"}
+            </Text>
+          </View>
+          <Switch
+            accessibilityLabel="Use online API"
+            disabled={!sourceReady}
+            value={source === "api"}
+            onValueChange={(online) => setSource(online ? "api" : "local")}
+          />
+        </View>
+        <PlacesStatus />
+      </View>
+      <View style={ui.section}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Offline & privacy"
@@ -105,9 +123,8 @@ export default function ClubScreen() {
         {privacyOpen && (
           <View style={{ gap: space.md }}>
             <Text style={ui.body}>
-              The directory is loaded after server-verified sign-in and kept in memory for this
-              session. An internet connection is required to sign in and verify access. Only
-              bookmark IDs stay on this device.
+              The local directory is included in the app. Online results are kept in memory. Your
+              bookmarks and data source preference are saved on this device.
             </Text>
             <Text style={ui.body}>
               Location is optional and used only when you choose Near me. It is never sent to this
@@ -119,8 +136,6 @@ export default function ClubScreen() {
           </View>
         )}
       </View>
-      <PlacesStatus />
-      <Button title="Sign out" secondary onPress={() => void signOut()} />
     </ScrollView>
   );
 }
@@ -130,5 +145,6 @@ const styles = StyleSheet.create({
   stats: { flexDirection: "row", alignItems: "center", gap: space.xl, paddingVertical: space.xl },
   number: { fontSize: 26, lineHeight: 32, color: colors.ink, fontWeight: "600" },
   statDivider: { width: 1, height: 36, backgroundColor: colors.border },
+  sourceLabel: { flex: 1 },
   disclosure: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: space.md },
 });

@@ -288,7 +288,7 @@ JSON-Einträge werden nicht automatisch gelöscht; Clubpasswort und Aktivierung
 werden nicht zurückgesetzt. Deshalb ist der Import ein eigener ausdrücklicher
 Befehl. Die Server bleiben danach gestartet.
 
-Testfixture der App bei geänderter Quelle anpassen, falls gewünscht:
+Mitgelieferte Ortsliste der Test-App nach einer Änderung der Quelle aktualisieren.
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\app\scripts\local.ps1 Snapshot

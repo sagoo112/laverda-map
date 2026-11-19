@@ -3,7 +3,7 @@ import { cleanup, render, screen, userEvent } from "@testing-library/react-nativ
 import PlaceDetailsSheet from "../src/features/places/PlaceDetailsSheet";
 import { normalizePlaces } from "../src/features/places/model";
 import { parseEntries } from "../src/features/places/schema";
-import source from "./fixtures/places.generated.json";
+import source from "../src/data/places.json";
 import { openNavigation, openWebsite } from "../src/shared/links";
 
 jest.mock("../src/shared/links", () => ({ openNavigation: jest.fn(), openWebsite: jest.fn() }));

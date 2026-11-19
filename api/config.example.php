@@ -12,4 +12,5 @@ return [
     'DB_USER' => 'your_database_user',
     'DB_PASSWORD' => 'REPLACE_WITH_DATABASE_PASSWORD',
     'CORS_ALLOWED_ORIGIN' => '*',
+    'PLAY_TEST_PUBLIC_DIRECTORY' => '0',
 ];

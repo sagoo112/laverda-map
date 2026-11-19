@@ -1,8 +1,8 @@
 # EAS für die Laverda-App einrichten
 
-Ziel für den Einstieg: eine Android-APK, die du auf deinem Telefon installieren
-und ohne laufenden Entwicklungsserver öffnen kannst. Die App benötigt weiterhin
-eine erreichbare API und das dort eingerichtete Clubpasswort.
+Die Play-Store-Testversion startet mit der mitgelieferten Ortsliste. Du kannst sie
+als APK direkt auf dem Telefon installieren oder als AAB in die interne Testspur
+der Google Play Console hochladen.
 
 Dein persönliches Expo-Konto reicht dafür. Für diesen Android-Test brauchst du
 kein Google-Play-Entwicklerkonto. Die kostenlose Expo-Stufe hat begrenzte
@@ -81,25 +81,19 @@ passen. Wenn das nicht stimmt, vor dem nächsten Schritt die Verknüpfung korrig
 ## 3. Die Einstellungen bei Expo hinterlegen
 
 Auf <https://expo.dev> dein Projekt öffnen und unter **Project settings →
-Environment variables** die folgenden Variablen anlegen. Für den ersten Test
-jeweils die Umgebung **preview** auswählen, Geltungsbereich **Project**:
+Environment variables** die folgenden Variablen anlegen. Für die Test-APK die
+Umgebung **preview** wählen. Für das AAB für Google Play **production** wählen.
+Als Geltungsbereich **Project** einstellen.
 
-| Name                          | Wert                                                           | Sichtbarkeit |
-| ----------------------------- | -------------------------------------------------------------- | ------------ |
-| `EXPO_PUBLIC_API_URL`         | Die erreichbare API-Origin, z. B. `https://api.laverdaclub.ch` | Plain text   |
-| `GOOGLE_MAPS_ANDROID_API_KEY` | Dein Google-Maps-Schlüssel für Android                         | Sensitive    |
-| `EXPO_PUBLIC_CONTACT_EMAIL`   | Die echte Kontaktadresse des Clubs, sofern bekannt             | Plain text   |
+| Name                          | Wert                                                 | Sichtbarkeit |
+| ----------------------------- | ---------------------------------------------------- | ------------ |
+| `EXPO_PUBLIC_API_URL`         | Optional. Standard ist `https://api.laverdaclub.ch`. | Plain text   |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Dein Google-Maps-Schlüssel für Android               | Sensitive    |
+| `EXPO_PUBLIC_CONTACT_EMAIL`   | Die echte Kontaktadresse des Clubs, sofern bekannt   | Plain text   |
 
-Die API-Adresse ohne `/health`, `/api/v1` oder andere Route eintragen. Der Server
-muss dafür bereits eingerichtet sein: PHP-API, Datenbank, Migrationen, importierte
-Daten und Clubpasswort. Ein EAS-Build stellt die API nicht bereit.
-`/health` prüft die Erreichbarkeit; eine erfolgreiche Club-Anmeldung und ein
-Verzeichnisabruf prüfen zusätzlich den eigentlichen App-Zugang.
-
-Für eine eigenständig laufende Test-APK funktionieren `localhost`, `127.0.0.1`
-und die nur auf deinem PC gestartete API nicht als öffentliche Serveradresse.
-Falls die produktive API noch fehlt, zuerst einen erreichbaren Testserver
-einrichten oder vorläufig das Entwicklungsprofil aus Schritt 6 verwenden.
+Falls du die API-Adresse überschreibst, gib die HTTPS-Adresse ohne Route an. Der
+lokale Modus funktioniert bereits, während der Webmaster die API einrichtet.
+Den Online-Modus kannst du nach der [Freigabe der Leseroute](../api/README.md#online-modus-der-play-store-testversion) testen.
 
 Die Maps-Variable muss **Sensitive** oder **Plain text** sein, damit auch die
 Konfigurationsauswertung in EAS CLI sie lesen kann. Die Sichtbarkeit **Secret**
@@ -107,8 +101,8 @@ ist hier ungeeignet. Der Maps-Schlüssel landet technisch in der Android-App;
 seinen Schutz übernehmen die Google-Beschränkungen aus Schritt 4.
 
 Lokale `.env`-Dateien werden nicht hochgeladen. Das Startskript für Cloud-Builds
-bricht bei fehlender Android-Maps-Konfiguration oder einer unpassenden
-Preview-/Produktions-API-Adresse ab. Ohne Kontaktadresse bleibt der bisherige
+bricht bei fehlender Android-Maps-Konfiguration oder einer ungültigen optionalen
+API-Adresse ab. Ohne Kontaktadresse bleibt der bisherige
 Kontakt-Platzhalter aktiv. DB-Passwörter und Clubpasswort niemals als
 App-Build-Variablen hinterlegen.
 
@@ -166,12 +160,12 @@ npm run eas -- build:list --platform android --limit 3
 Falls Android wegen einer anderen Signatur die Installation als Update ablehnt:
 Das ist beim Wechsel von lokalem Debug-Keystore zu EAS möglich. Die bisherige
 Testinstallation lässt sich deinstallieren; dabei gehen deren lokale Favoriten
-und Anmeldung verloren. Falls du sie behalten möchtest, zuerst die Signierung
+und die gewählte Datenquelle verloren. Falls du sie behalten möchtest, zuerst die Signierung
 abgleichen.
 
-Prüfen: Anmeldung mit Clubpasswort, Liste und Karte, Favoriten, Ab-/Anmeldung und
-Kontaktentwurf. Die APK auch bei ausgeschaltetem Metro-Entwicklungsserver öffnen.
-Internet und API müssen weiterhin erreichbar sein.
+Die APK bei ausgeschaltetem Metro-Entwicklungsserver öffnen. Die lokale Liste,
+Karte, Favoriten und den Kontaktentwurf auf dem Telefon prüfen. Die Google-Karte
+benötigt für Kartenkacheln eine Internetverbindung.
 
 ## 6. Die weiteren Profile
 
@@ -214,7 +208,20 @@ Die Profile verwenden aktuell dieselbe App-Kennung. Sie sind nicht als getrennt
 installierbare App-Varianten eingerichtet. Produktions-Buildnummern erhöht EAS
 automatisch; die sichtbare Version bleibt in `app.json` gepflegt.
 
-## 7. Später in die Stores übermitteln
+## 7. Android-AAB für den internen Play-Test
+
+Auf dem Branch `codex/play-store-test` im Ordner `app` diesen Build starten.
+
+```powershell
+npm.cmd run build:android:production
+```
+
+Nach dem Build das AAB auf der EAS-Buildseite herunterladen. In der Google Play
+Console beim App-Eintrag einen Release in der Spur **Interner Test** anlegen und
+das AAB dort hochladen. Prüfe vor dem Upload, dass die Einträge in der
+mitgelieferten Ortsliste an die Tester weitergegeben werden dürfen.
+
+### Weitere Store-Uploads
 
 Vor einer Veröffentlichung die vorgesehenen Prüfungen aus `README.md` und echte
 Gerätetests durchführen. Google Play beziehungsweise App Store Connect benötigen

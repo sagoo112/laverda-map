@@ -36,6 +36,11 @@ final class Config
         return self::optional('CORS_ALLOWED_ORIGIN', '*');
     }
 
+    public static function playTestDirectoryEnabled(): bool
+    {
+        return self::optional('PLAY_TEST_PUBLIC_DIRECTORY', '0') === '1';
+    }
+
     private static function required(string $name, bool $allowEmpty = false): string
     {
         $value = self::value($name);
@@ -89,7 +94,7 @@ final class Config
             throw new RuntimeException('Private configuration must return an array.');
         }
         $allowed = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
-            'CORS_ALLOWED_ORIGIN', 'APP_PASSWORD'];
+            'CORS_ALLOWED_ORIGIN', 'APP_PASSWORD', 'PLAY_TEST_PUBLIC_DIRECTORY'];
         foreach ($values as $key => $value) {
             if (!in_array($key, $allowed, true) || !is_string($value)) {
                 throw new RuntimeException('Private configuration contains an unsupported key or non-string value.');

@@ -1,5 +1,5 @@
 const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/+$/, "");
-export const API_URL = configuredUrl || null;
+export const API_URL = configuredUrl || "https://api.laverdaclub.ch";
 let accessToken: string | null = null;
 let unauthorized: (() => void) | null = null;
 export const setAccessToken = (value: string | null) => {
@@ -21,7 +21,6 @@ export async function requestJson(
   options: RequestInit = {},
   timeoutMs = 12000,
 ): Promise<unknown> {
-  if (!API_URL) throw new Error("EXPO_PUBLIC_API_URL is not configured.");
   if (typeof __DEV__ !== "undefined" && !__DEV__ && !API_URL.startsWith("https://")) {
     throw new Error("HTTPS is required for API access.");
   }

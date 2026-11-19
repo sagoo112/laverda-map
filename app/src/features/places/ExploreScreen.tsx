@@ -16,7 +16,7 @@ import { EmptyState, Icon, IconButton, SearchField, TextAction } from "../../sha
 import { colors, radius, space, ui } from "../../shared/theme";
 
 export default function ExploreScreen() {
-  const { places, favorites, loading, refresh } = usePlaces();
+  const { places, favorites, loading, refresh, source } = usePlaces();
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<"map" | "list">(MAP_AVAILABLE ? "map" : "list");
   const [query, setQuery] = useState("");
@@ -233,7 +233,7 @@ export default function ExploreScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             refreshing={loading}
-            onRefresh={refresh}
+            onRefresh={source === "api" ? refresh : undefined}
             contentContainerStyle={styles.list}
             ListHeaderComponent={
               nearby.origin ? (

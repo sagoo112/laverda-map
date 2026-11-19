@@ -22,13 +22,13 @@ const snapshot = {
   generatedAt: source.generatedAt,
   entries: allocateIds(source.entries).filter((entry) => entry.visibility === "public"),
 };
-const output = path.join(root, "app/tests/fixtures/places.generated.json");
+const output = path.join(root, "app/src/data/places.json");
 const contents = JSON.stringify(snapshot, null, 2) + "\n";
 if (process.argv.includes("--check")) {
   if (!fs.existsSync(output) || fs.readFileSync(output, "utf8") !== contents) {
-    console.error("Test fixture is stale. Run npm run data:generate.");
+    console.error("Bundled places.json is stale. Run npm run data:generate.");
     process.exitCode = 1;
-  } else console.log("Test public fixture matches the authoritative API seed.");
+  } else console.log("Bundled places.json matches the public entries in the API seed.");
 } else {
   fs.mkdirSync(path.dirname(output), { recursive: true });
   fs.writeFileSync(output, contents);
