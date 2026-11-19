@@ -22,14 +22,26 @@ Installation ist nicht nötig. Node.js und npm sind auf deinem PC vorhanden.
 
 ## 2. Bei Expo anmelden und das Projekt verbinden
 
+Diese Schritte bewusst einzeln ausführen, weil du ein Konto und ein entferntes
+Projekt auswählst; der lokale Helfer verbindet keine Cloud-Konten automatisch.
+
+Zuerst im Terminal mit deinem persönlichen Expo-Konto anmelden:
+
 ```powershell
-npm run eas -- login
-npm run eas -- whoami
-npm run eas -- init
+npm.cmd run eas -- login
 ```
 
-Melde dich im Terminal mit deinem persönlichen Expo-Konto an. Das Passwort
-gehört nur in den Anmeldedialog. `whoami` muss danach deinen Expo-Namen anzeigen.
+Das Passwort gehört nur in den Anmeldedialog. Anschliessend das gewählte Konto prüfen:
+
+```powershell
+npm.cmd run eas -- whoami
+```
+
+Erst wenn dein Expo-Name stimmt, das Projekt verbinden:
+
+```powershell
+npm.cmd run eas -- init
+```
 
 Bei `init` dein persönliches Konto als Eigentümer auswählen. Falls du dort schon
 ein EAS-Projekt für genau diese App hast, dieses verbinden. Andernfalls das
@@ -180,11 +192,12 @@ die lokale API-Adresse in deiner lokalen Umgebung setzen und den bestehenden
 USB-Ablauf verwenden:
 
 ```powershell
-adb reverse tcp:8080 tcp:8080
-adb reverse tcp:8081 tcp:8081
-npx expo start --dev-client --localhost
+npm.cmd run local -- Start
 ```
 
+Diesen Windows-Helfer aus `app/` aufrufen; er richtet beide USB-Weiterleitungen ein
+und startet Metro. Auf anderen Plattformen die beiden `adb reverse`-Befehle für
+8080/8081 und `npx expo start --dev-client --localhost` manuell getrennt ausführen.
 Dazu muss die lokale PHP-/MariaDB-Umgebung laufen und lokal
 `EXPO_PUBLIC_API_URL=http://127.0.0.1:8080` konfiguriert sein. Siehe
 [lokale API-Anleitung](../api/LOCAL-DEVELOPMENT.md). Der Maps-Schlüssel muss

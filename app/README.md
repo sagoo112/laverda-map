@@ -14,16 +14,15 @@ Expo SDK 57, React Native 0.86, React 19 und TypeScript. Die App spricht ausschl
 
 Die Schritt-für-Schritt-Anleitung für PowerShell, Android-Handy per USB, lokale Tests, native Builds und das Stoppen aller Dienste steht in [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md).
 
-Node 24.13+ und npm verwenden. Android benötigt Android Studio/SDK und Java; iOS benötigt macOS/Xcode. Aus `app/`:
+Windows-Helfer im App-Ordner: `npm.cmd run local -- Doctor`, einmalig `Setup`, danach `Start` und bei nativen Änderungen `Android`. `Devices`, `Connect`, `Verify`, `Snapshot`, `Status`, `Stop` und `GradleStop` decken die weiteren Schritte ab. API/MariaDB separat über den API-Helfer starten/stoppen. Vorhandene Konfiguration wird erhalten; der Helfer startet keine Cloud-Builds.
+
+Node 24.13+ und npm verwenden. Android benötigt Android Studio/SDK und Java; iOS benötigt macOS/Xcode. Unter Windows aus `app/` einmalig installieren:
 
 ```powershell
-npm ci
-npm run verify
-npx expo start --dev-client
-npx expo run:android
-# Auf macOS:
-npx expo run:ios
+npm.cmd run local -- Setup
 ```
+
+Danach `npm.cmd run local -- Start` in einem eigenen Fenster und für einen neuen Build `npm.cmd run local -- Android` in einem weiteren Fenster ausführen. Für iOS auf macOS gelten `npm ci`, `npx expo prebuild --platform ios` und `npx expo run:ios` als getrennte Schritte; der PowerShell-Helfer ist für Windows.
 
 Native Änderungen, insbesondere SecureStore, MailComposer, Expo-Patches und Maps-Konfiguration, benötigen einen neuen Android-/iOS-Build. Ein JavaScript-Neuladen reicht dafür nicht. Generierte native Ordner bleiben ignoriert. Bei OneDrive-/Windows-Pfadlängenfehlern eine kurze Arbeitskopie ausserhalb von OneDrive und einen kurzen Gradle-Cache verwenden; vorhandene native Anpassungen und Debug-Signatur erhalten.
 
@@ -85,12 +84,9 @@ tests/fixtures/        Nur Testdaten; kein Runtime-Import
 ## Prüfungen
 
 ```powershell
-npm run verify
-npm run format:check
-npx expo install --check
-npx expo export --platform android --platform ios
+npm.cmd run local -- Verify
 ```
 
-`npm run data:generate` erzeugt die Testfixture aus `api/places.json`; `data:check` prüft die Übereinstimmung. Für den optionalen Live-Vertragstest müssen `LAVERDA_TEST_API_URL` und ein kurzlebiges `LAVERDA_TEST_TOKEN` für eine frisch importierte Testdatenbank gesetzt sein. Geheimnisse nicht in Befehlsargumente oder Git schreiben. Komponentenprüfungen mocken native Module; echte Maps-, SecureStore- und Mail-Interaktion muss auf einem Gerät geprüft werden. Der Maestro-Smoke-Test verwendet einen vorbereiteten Testzugang und löscht den Zustand der Testinstallation.
+`Verify` bündelt TypeScript, Lint, Tests, Formatierung, Expo-Paketprüfung und Bundle-Export. `npm.cmd run local -- Snapshot` erzeugt und prüft die Testfixture aus `api/places.json`; es importiert keine Datenbank und ändert keine Runtime-Daten. Für den optionalen Live-Vertragstest müssen `LAVERDA_TEST_API_URL` und ein kurzlebiges `LAVERDA_TEST_TOKEN` für eine frisch importierte Testdatenbank gesetzt sein. Geheimnisse nicht in Befehlsargumente oder Git schreiben. Komponentenprüfungen mocken native Module; echte Maps-, SecureStore- und Mail-Interaktion muss auf einem Gerät geprüft werden. Der Maestro-Smoke-Test verwendet einen vorbereiteten Testzugang und löscht den Zustand der Testinstallation.
 
 Sicherheitsstand der npm-Abhängigkeiten am 18.11.2026: kompatible Updates für `shell-quote` und `zod` sind enthalten. `npm audit` meldet weiterhin 6 moderate und 62 hohe Meldungen im Abhängigkeitsbaum, keine kritische. Die angebotenen umfassenden Fixes enthalten inkompatible Expo-/React-Native-Downgrades; diese wurden nicht erzwungen. Vor einer Veröffentlichung erneut prüfen und mit einem unterstützten SDK-Upgrade abarbeiten. Erfolgreiche Funktionstests bedeuten keinen vollständig bereinigten Sicherheits-Audit.

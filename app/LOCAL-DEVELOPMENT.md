@@ -4,6 +4,53 @@ Diese Anleitung gilt für Windows, PowerShell und ein echtes Android-Handy per U
 
 Die API hat eine [eigene lokale Anleitung](../api/LOCAL-DEVELOPMENT.md), Cloud-Builds stehen in [EAS-SETUP.md](EAS-SETUP.md). Die Befehle starten Dienste erst, wenn du sie selbst ausführst.
 
+## Kurzer Weg mit den lokalen Skripten
+
+Die wiederkehrenden Schritte unten sind jetzt in `app/scripts/local.ps1` gebündelt. Im App-Ordner:
+
+```powershell
+Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app\app"
+npm.cmd run local -- Doctor
+```
+
+| Aktion                       | Befehl im App-Ordner              | Wirkung                                                                                                          |
+| ---------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Voraussetzungen              | `npm.cmd run local -- Doctor`     | Prüft Node, SDK, Java und Konfigurationsstatus; keine Server/Downloads, zeigt keine Schlüssel.                   |
+| Erstinstallation             | `npm.cmd run local -- Setup`      | Führt `npm ci` aus. Legt `.env.local` nur an, wenn sie fehlt; vorhandene Werte bleiben erhalten.                 |
+| Geräte anzeigen              | `npm.cmd run local -- Devices`    | Zeigt die angeschlossenen Android-Geräte, ohne Ports weiterzuleiten.                                             |
+| Nur USB verbinden            | `npm.cmd run local -- Connect`    | Wählt ein einziges autorisiertes Gerät und richtet Port 8080/8081 ein.                                           |
+| Metro starten                | `npm.cmd run local -- Start`      | Verbindet das Handy und startet Metro interaktiv im selben Fenster.                                              |
+| Android bauen/installieren   | `npm.cmd run local -- Android`    | Verwendet den Metro-Prozess dieses Helfers; führt Prebuild und `run:android --no-bundler` aus.                   |
+| Automatische Prüfungen       | `npm.cmd run local -- Check`      | TypeScript, Lint, Tests, Formatierung und Expo-Paketprüfung, ohne API-/Metro-Start.                              |
+| Bundles prüfen               | `npm.cmd run local -- Export`     | Erzeugt Android-/iOS-JavaScript-Bundles in `dist`, keine installierbare APK.                                     |
+| Alles prüfen und exportieren | `npm.cmd run local -- Verify`     | Führt `Check` und danach `Export` aus; bei Fehlern wird abgebrochen.                                             |
+| Testdaten aktualisieren      | `npm.cmd run local -- Snapshot`   | Erzeugt die Testfixture aus `api/places.json` und prüft anschliessend ihre Übereinstimmung.                      |
+| Gradle beenden               | `npm.cmd run local -- GradleStop` | Führt im generierten Android-Projekt `gradlew --stop` aus. Betrifft Daemons derselben Gradle-Version.            |
+| Laufzustand                  | `npm.cmd run local -- Status`     | Zeigt eigenen Metro-Prozess, Portbelegung und gespeicherte USB-Zuordnungen.                                      |
+| App-Werkzeuge stoppen        | `npm.cmd run local -- Stop`       | Beendet nur den aufgezeichneten Metro-Prozess samt seinen Workern und entfernt selbst angelegte USB-Zuordnungen. |
+
+`Setup` ist eine ausdrückliche Installation und kann Pakete herunterladen. Es verweigert den Austausch von `node_modules`, solange Port 8081 belegt ist. Die erstellte Konfigurationsvorlage hat noch keinen Maps-Schlüssel. Den echten Schlüssel privat ergänzen; das kann kein Setup-Skript für dich beantragen.
+
+Der SDK-Pfad wird aus `-SdkPath`, `ANDROID_HOME`, `ANDROID_SDK_ROOT` oder dem Windows-Standardpfad ermittelt. Beispiel bei mehreren Geräten oder einem anderen SDK:
+
+```powershell
+npm.cmd run local -- Start -DeviceId DEINE_GERAETE_ID -SdkPath "C:\Android\Sdk"
+```
+
+Platzhalter ersetzen. Ein ausdrücklich übergebener falscher SDK-Pfad führt zum Abbruch. Mehrere Geräte werden nicht stillschweigend auf das erste reduziert. Konkurrierende USB-Zuordnungen werden nicht ersetzt. `Start` und `Android` verwenden nur für ihre Prozesse die lokale API `http://127.0.0.1:8080` und Metro `http://127.0.0.1:8081`; `.env.local` und dauerhafte Windows-Variablen werden dabei nicht umgeschrieben.
+
+**Normaler Tagesablauf:** API in Fenster 1 mit dem API-Helfer starten. In Fenster 2 `npm.cmd run local -- Start` und dort später `a` drücken. Nach nativen Änderungen in Fenster 3 `npm.cmd run local -- Android`. Anschliessend `npm.cmd run local -- Stop` und separat `api/scripts/local.ps1 Stop` ausführen. Ein bereits manuell gestarteter Metro-Server wird vom Helfer nicht übernommen: erst dort `Ctrl+C`, dann mit dem Helfer starten. Die folgenden Abschnitte erklären die Skripte und ihre Hintergründe im Detail. Alle `npm.cmd run local`-Aufrufe gelten aus dem App-Ordner; die beiden Ordnerwechsel unten sind einmalig pro Terminal nötig.
+
+Laufzeitaufzeichnungen liegen unter `.local-tools/app-local/` und sind von Git ausgeschlossen. PID, Programm und Startzeit werden vor dem Stoppen geprüft; fremde oder inzwischen wiederverwendete Prozess-IDs werden nicht beendet. Manuell vorab bestehende USB-Zuordnungen bleiben erhalten. Ist adb schon beendet, startet `Stop` ihn nicht erneut; offene Zuordnungsaufzeichnungen bleiben zur späteren Bereinigung erhalten. API/MariaDB, andere adb-Sitzungen und Gradle werden durch den App-Helfer nicht gestoppt. Für Gradle gilt weiterhin Abschnitt 10.
+
+Die Helfer selbst lassen sich aus dem Projektstamm separat prüfen:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\app\tests\local-tools.ps1
+```
+
+Diese Prüfungen verwenden temporäre Node-Prozesse und simulierte USB-/HTTP-Antworten. Sie verändern weder dein Handy noch deine Datenbank und bauen keine APK. GitHub Actions führt sie unter Windows PowerShell 5.1 und PowerShell 7 aus.
+
 ## 1. Was wird gestartet?
 
 ```text
@@ -30,9 +77,7 @@ Im App-Ordner prüfen:
 
 ```powershell
 Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app\app"
-node.exe --version
-npm.cmd --version
-java.exe -version
+npm.cmd run local -- Doctor
 ```
 
 `JAVA_HOME` muss auf das passende JDK zeigen. Falls Java nicht gefunden wird, in Android Studio das verwendete Gradle-JDK nachsehen und dessen Installationsordner verwenden. Nicht beliebig eine andere Java-Version installieren.
@@ -40,7 +85,7 @@ java.exe -version
 Beim ersten Checkout oder nach Änderungen von `package-lock.json`:
 
 ```powershell
-npm.cmd ci
+npm.cmd run local -- Setup
 ```
 
 **Warum:** Installiert die festgelegten Paketversionen reproduzierbar und ersetzt dabei `node_modules`. Metro vorher beenden. Dieser Schritt ist nicht bei jedem Start erforderlich.
@@ -68,34 +113,26 @@ Eine geänderte API-Adresse erfordert einen Metro-Neustart. Änderungen an Maps-
 ```powershell
 Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Start
-Invoke-RestMethod http://127.0.0.1:8080/health
 ```
 
-Erwartet: `status` ist `Healthy`. Ohne eingerichtetes Clubpasswort kann Health trotzdem gesund sein, während die Anmeldung gesperrt bleibt. Passwort einmalig gemäss [API-Anleitung](../api/LOCAL-DEVELOPMENT.md) setzen; der Tagesstart setzt es nicht neu.
+Der Startbefehl wartet selbst auf `Healthy`. Den Komponentenstatus zusätzlich anzeigen mit `api/scripts/local.ps1 Health`. Ohne eingerichtetes Clubpasswort kann Health trotzdem gesund sein, während die Anmeldung gesperrt bleibt. Passwort einmalig gemäss [API-Anleitung](../api/LOCAL-DEVELOPMENT.md) setzen; der Tagesstart setzt es nicht neu.
 
 ## 5. Fenster 2: USB-Verbindung und Metro
 
 ```powershell
 Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app\app"
-$env:ANDROID_HOME = "C:\Users\sagoo\AppData\Local\Android\Sdk"
-$adb = Join-Path $env:ANDROID_HOME "platform-tools\adb.exe"
-if (!(Test-Path -LiteralPath $adb)) { throw 'SDK-Pfad anhand der Android SDK Location korrigieren.' }
-& $adb devices -l
+npm.cmd run local -- Devices
 ```
 
-Bei abweichender Installation den SDK-Pfad anpassen. Die Handy-Zeile muss `device` anzeigen. Bei `unauthorized` das Handy entsperren und die Anfrage bestätigen; bei fehlender Zeile Kabel, USB-Modus und Treiber prüfen.
+Der Helfer ermittelt den SDK-Pfad automatisch; bei abweichender Installation `-SdkPath` ergänzen. Die Handy-Zeile muss `device` anzeigen. Bei `unauthorized` das Handy entsperren und die Anfrage bestätigen; bei fehlender Zeile Kabel, USB-Modus und Treiber prüfen.
 
-Die Seriennummer aus der ersten Spalte der Handy-Zeile eingeben:
+USB-Ports verbinden und Metro starten:
 
 ```powershell
-$deviceId = Read-Host 'Seriennummer des Android-Handys aus adb devices'
-& $adb -s $deviceId reverse tcp:8080 tcp:8080
-& $adb -s $deviceId reverse tcp:8081 tcp:8081
-& $adb -s $deviceId reverse --list
-npx.cmd expo start --dev-client --localhost --port 8081
+npm.cmd run local -- Start
 ```
 
-**Warum zwei Weiterleitungen:** 8080 liefert Daten und Anmeldung, 8081 den App-Code. `-s` wählt genau dein Gerät aus, auch bei zusätzlich laufendem Emulator. Nach erneutem Anschliessen oder Neustart wieder einrichten. Für diesen Ablauf ist kein gemeinsames WLAN nötig.
+**Warum zwei Weiterleitungen:** 8080 liefert Daten und Anmeldung, 8081 den App-Code. Der Helfer setzt beide `adb reverse`-Zuordnungen und wählt ein einziges autorisiertes Gerät. Bei mehreren Geräten `-DeviceId` mit der Seriennummer aus `Devices` ergänzen. Nach erneutem Anschliessen `Connect` ausführen; wenn Metro gestoppt ist, genügt erneut `Start`. Für diesen Ablauf ist kein gemeinsames WLAN nötig.
 
 Das Metro-Fenster offen lassen. Ist der aktuelle Development Build bereits installiert und gab es keine nativen Änderungen, hier `a` drücken und dein Handy auswählen. Bei der Serverauswahl des Developer-Clients den Metro-Server `http://127.0.0.1:8081` öffnen beziehungsweise auswählen.
 
@@ -105,13 +142,14 @@ Nach Änderungen an Icon, SecureStore, MailComposer oder Maps:
 
 ```powershell
 Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app\app"
-$env:ANDROID_HOME = "C:\Users\sagoo\AppData\Local\Android\Sdk"
-npx.cmd expo prebuild --platform android --no-install
-if ($LASTEXITCODE -ne 0) { throw 'Prebuild fehlgeschlagen; zuerst die Fehlermeldung beheben.' }
-npx.cmd expo run:android --device --no-bundler
+npm.cmd run local -- Android
 ```
 
-Bei abweichendem SDK-Pfad auch hier korrigieren; Variablen gelten nur für das jeweilige Fenster. Das richtige Handy in der Geräteauswahl bestätigen.
+Metro muss zuvor mit `Start` laufen. Bei mehreren Geräten `-DeviceId` und gegebenenfalls `-SdkPath` ergänzen. Der Helfer setzt SDK/JDK-Werte nur für seine Kindprozesse und bricht bei einem fehlgeschlagenen Prebuild vor dem Installieren ab.
+
+Der Befehl schreibt die Expo- und Gradle-Ausgabe ins Terminal und in `.local-tools/app-local/android-build.log` im Projektstamm. Ein neuer Build ersetzt das vorherige Protokoll. Bei `BUILD FAILED` steht die konkrete Ursache in der Regel weiter oben unter `What went wrong`, mit dem fehlgeschlagenen Task und dem betroffenen Dateipfad.
+
+`-DeviceId` bleibt die Seriennummer aus `Devices`. Der Helfer ermittelt dazu den Gerätenamen aus der installierten Expo-CLI: `adb -s` verwendet die Seriennummer, Expo `run:android --device` dagegen den Namen, beispielsweise `Pixel_8_Pro`. Vor und nach dem Prebuild wird dasselbe Gerät geprüft. Bei identischen Expo-Namen die anderen passenden Geräte/Emulatoren trennen, damit kein falsches Ziel ausgewählt wird.
 
 **Prebuild** überträgt `app.json`, `app.config.js` und Plugins in die generierten Android-Dateien. So werden auch neue Icon-/Maps-Einstellungen übernommen. Generierte native Ordner sind von Git ausgeschlossen. Manuelle Änderungen darin vorher sichern; wichtige Anpassungen gehören langfristig in Konfiguration oder Plugins. `--clean` ist für den normalen Ablauf nicht nötig und kann lokale native Anpassungen oder Signierungsdateien entfernen.
 
@@ -138,7 +176,7 @@ Ein neues Launcher-Icon erscheint erst mit der neu installierten APK; JavaScript
 **Lokale Datenquelle prüfen:** Die API-Anleitung enthält einen angemeldeten Abruf direkt aus MariaDB. `.env.local` muss auf die lokale Origin zeigen. Die App enthält keine eingebauten Offline-Ortsdaten mehr; bereits geladene Daten können während einer Sitzung aber im Arbeitsspeicher liegen. Eine sichtbare Liste allein beweist deshalb keinen neuen Abruf. App aktualisieren beziehungsweise erneut öffnen und parallel in einem zusätzlichen Fenster das Log beobachten:
 
 ```powershell
-Get-Content "$env:LOCALAPPDATA\LaverdaDev\workspace-app\api-error.log" -Tail 20 -Wait
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ..\api\scripts\local.ps1 Logs -Follow
 ```
 
 Zugriffe auf `/auth/session` und `/places` müssen zum Test passen. `Ctrl+C` beendet nur das Beobachten dieses Logs.
@@ -148,11 +186,7 @@ Zugriffe auf `/auth/session` und `/places` müssen zum Test passen. `Ctrl+C` bee
 Aus `app/`:
 
 ```powershell
-npm.cmd run verify
-if ($LASTEXITCODE -ne 0) { throw 'App-Pruefungen fehlgeschlagen.' }
-npm.cmd run format:check
-npx.cmd expo install --check
-npx.cmd expo export --platform android --platform ios
+npm.cmd run local -- Verify
 ```
 
 | Befehl                         | Prüft / erzeugt                                                              |
@@ -162,7 +196,7 @@ npx.cmd expo export --platform android --platform ios
 | `npx.cmd expo install --check` | Paketversionen passend zum Expo SDK                                          |
 | `npx.cmd expo export ...`      | JavaScript-/Asset-Bundles in `app/dist`, keine installierbare APK/IPA        |
 
-Native Module werden in Komponententests gemockt. Maps, SecureStore und Mail-App müssen zusätzlich am Gerät geprüft werden. Der optionale Live-API-Vertragstest wird ohne `LAVERDA_TEST_API_URL` und `LAVERDA_TEST_TOKEN` übersprungen; er braucht eine Testdatenbank mit unverändertem Seed und ein gültiges Token, keine Produktion.
+`Verify` führt alle vier Prüfungen in dieser Reihenfolge aus und stoppt bei Fehlern. Für die Prüfungen ohne Bundle-Export reicht `Check`. Es startet weder Metro noch API/MariaDB. Native Module werden in Komponententests gemockt. Maps, SecureStore und Mail-App müssen zusätzlich am Gerät geprüft werden. Der optionale Live-API-Vertragstest wird ohne `LAVERDA_TEST_API_URL` und `LAVERDA_TEST_TOKEN` übersprungen; er braucht eine Testdatenbank mit unverändertem Seed und ein gültiges Token, keine Produktion.
 
 ## 9. Eigenständige Test-APK / iOS
 
@@ -179,37 +213,33 @@ Windows erstellt keinen lokalen iOS-Build. Auf einem eingerichteten Mac: `npx ex
 
 ## 10. Alles stoppen
 
-1. Im Metro-Fenster `Ctrl+C` drücken, eventuelle Nachfrage bestätigen.
-2. Im adb-Fenster die USB-Zuordnungen entfernen:
+1. Aus dem App-Ordner in einem weiteren Terminal den eigenen Metro-Prozess und die vom Helfer angelegten USB-Zuordnungen beenden:
 
 ```powershell
-& $adb -s $deviceId reverse --remove tcp:8080
-& $adb -s $deviceId reverse --remove tcp:8081
+npm.cmd run local -- Stop
 ```
 
-Ist das Handy bereits getrennt, können die Zuordnungen nicht mehr entfernt werden; beim nächsten Verbinden ohnehin erneut setzen.
+Alternativ beendet `Ctrl+C` im Metro-Fenster Metro; danach entfernt `Stop` noch die USB-Zuordnungen. Ist das Handy bereits getrennt, werden nicht entfernbare Zuordnungen zur späteren Bereinigung aufgezeichnet. Manuell angelegte Zuordnungen übernimmt der Helfer nicht.
 
-3. API/MariaDB aus dem Projektstamm stoppen:
+2. API/MariaDB ebenfalls aus dem App-Ordner stoppen:
 
 ```powershell
-Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Stop
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\api\scripts\local.ps1 Status
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ..\api\scripts\local.ps1 Stop
 ```
 
-4. Nach einem lokalen Build bei Bedarf auch dessen Gradle-Daemons stoppen:
+3. Nach einem lokalen Build bei Bedarf auch dessen Gradle-Daemons stoppen:
 
 ```powershell
-Set-Location "C:\Users\sagoo\OneDrive\Dokumente\workspace-app\app\android"
-.\gradlew.bat --stop
+npm.cmd run local -- GradleStop
 ```
 
-Das betrifft Daemons derselben Gradle-Version. Falls du keine weitere Android-Sitzung brauchst: im adb-Fenster `& $adb kill-server`. Das beendet den gemeinsamen adb-Server für alle Geräte dieses PCs. Einen geöffneten Emulator separat in Android Studio schliessen. Datenbank und Favoriten werden beim Stoppen nicht gelöscht.
+Das betrifft Daemons derselben Gradle-Version und kann damit andere Android-Arbeitskopien betreffen; deshalb ist es ein eigener ausdrücklicher Befehl. Den gemeinsamen adb-Server und andere Geräte lässt der Helfer weiterlaufen. Einen geöffneten Emulator separat in Android Studio schliessen. Datenbank und Favoriten werden beim Stoppen nicht gelöscht.
 
 ## 11. Häufige Fehler
 
 | Meldung / Verhalten                                              | Nächster Schritt                                                                                                                                                                                                                             |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Could not find device with name: <Seriennummer>`                | Den aktuellen Helfer verwenden: Er ordnet die Seriennummer dem Expo-Gerätenamen zu. Für manuelle Expo-Aufrufe `--device` ohne Wert zur Auswahl verwenden, statt eine ADB-Seriennummer zu übergeben.                                          |
 | `--port and --no-bundler are mutually exclusive`                 | `--port` beim `run:android` weglassen; nur Metro bekommt `--port 8081`.                                                                                                                                                                      |
 | `NoRouteToHost`, `unexpected end of stream`, leere Serverauswahl | API-Health und fertigen Metro-Start prüfen. Richtige Seriennummer und beide USB-Weiterleitungen kontrollieren, dann erneut `a` bei Metro. Keine alte WLAN-IP verwenden.                                                                      |
 | Health gut, Anmeldung scheitert                                  | API-Adresse und gesetztes Clubpasswort prüfen. Health ist keine erfolgreiche Anmeldung.                                                                                                                                                      |
@@ -220,3 +250,10 @@ Das betrifft Daemons derselben Gradle-Version. Falls du keine weitere Android-Si
 | Signatur passt nicht zur installierten App                       | Lokale Debug- und EAS-Signatur vergleichen. Nicht vorschnell deinstallieren: dabei gehen Favoriten und Anmeldung verloren.                                                                                                                   |
 
 Weitere Quellen: [Expo CLI](https://docs.expo.dev/more/expo-cli/), [native Projektgenerierung](https://docs.expo.dev/workflow/continuous-native-generation/), [Android Debug Bridge](https://developer.android.com/tools/adb).
+
+### Gradle meldet `Cannot snapshot … not a regular file`
+
+Gradle konnte die genannte Datei nicht als reguläre Datei lesen. Beim Pixel-Build hier betraf das zuerst `libfbjni.so` im Gradle-Cache und danach `libc++_shared.so`, die bereits im Android NDK als Windows-Sonderdatei vorlag. Welche Reparatur passt, hängt vom Pfad in der Fehlermeldung ab:
+
+- **Unter `.gradle\caches\…\transforms`**: Beende zuerst aktive Builds und dann die Gradle-Daemons mit `npm.cmd run local -- GradleStop`. Benenne nur den betroffenen Transform-Ordner um. Gradle erzeugt ihn beim nächsten Build neu. [Gradle-Verzeichnisse](https://docs.gradle.org/current/userguide/directory_layout.html)
+- **Bei `libc++_shared.so` unter `node_modules` oder im Android-SDK**: Prüfe die im Build verwendete NDK-Version. Ist die Quelldatei im SDK betroffen, installiere diese NDK-Version über **Android Studio → SDK Manager → SDK Tools → NDK (Side by side)** neu. Wenn die generierten Dateien unter `node_modules` weiterhin betroffen sind, stoppe Metro mit `npm.cmd run local -- Stop` und führe `npm.cmd run local -- Setup` aus. Starte danach Metro und wiederhole `Android`. Liegt der Arbeitsordner in OneDrive und tritt der Fehler erneut auf, verwende eine Arbeitskopie unter einem kurzen lokalen Pfad ausserhalb von OneDrive. [Android NDK installieren](https://developer.android.com/studio/projects/install-ndk)

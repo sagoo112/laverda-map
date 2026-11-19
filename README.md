@@ -42,14 +42,11 @@ Hosttech benötigt PHP/PDO MySQL, persistente MariaDB, HTTPS und für Migration/
 ## Prüfungen
 
 ```powershell
-cd app
-npm ci
-npm run verify
-npm run format:check
-npx expo install --check
-npx expo export --platform android --platform ios
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\app\scripts\local.ps1 Verify
 ```
 
-Backend-Tests und lokale Start-/Stop-Werkzeuge stehen in [api/LOCAL-DEVELOPMENT.md](api/LOCAL-DEVELOPMENT.md). Integrations-/Upgrade-Tests dürfen nur isolierte `laverda_test_*`-Datenbanken verwenden. Native Karteninteraktion, SecureStore und Mail-Apps sind zusätzlich auf echten Geräten zu prüfen.
+Beim ersten Checkout zuerst denselben App-Helfer mit `Setup` statt `Verify` aufrufen. `Verify` bündelt TypeScript, Lint, Tests, Formatierung, Paketprüfung und Bundle-Export; bei Fehlern bricht es ab.
+
+Backend-Tests, direkte lokale DB-Anmeldung (`local.ps1 Database`) und Start-/Stop-Werkzeuge stehen in [api/LOCAL-DEVELOPMENT.md](api/LOCAL-DEVELOPMENT.md). Integrations-/Upgrade-Tests dürfen nur isolierte `laverda_test_*`-Datenbanken verwenden. Native Karteninteraktion, SecureStore und Mail-Apps sind zusätzlich auf echten Geräten zu prüfen.
 
 `REVIEW.md` und `IMPLEMENTATION.md` sind historische Berichte. Ihre Aussagen zur früher öffentlichen, passwortlosen App und zum Offline-Verzeichnis beschreiben den damaligen Stand; diese README-Dateien beschreiben die aktuelle Architektur.
