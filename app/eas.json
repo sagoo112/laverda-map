@@ -29,6 +29,15 @@
       "android": {
         "buildType": "app-bundle"
       }
+    },
+    "play-test": {
+      "extends": "production",
+      "environment": "preview",
+      "android": {
+        "env": {
+          "EXPO_PUBLIC_API_URL": "https://api.laverdaclub.ch"
+        }
+      }
     }
   }
 }

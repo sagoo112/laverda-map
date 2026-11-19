@@ -81,9 +81,9 @@ passen. Wenn das nicht stimmt, vor dem nächsten Schritt die Verknüpfung korrig
 ## 3. Die Einstellungen bei Expo hinterlegen
 
 Auf <https://expo.dev> dein Projekt öffnen und unter **Project settings →
-Environment variables** die folgenden Variablen anlegen. Für die Test-APK die
-Umgebung **preview** wählen. Für das AAB für Google Play **production** wählen.
-Als Geltungsbereich **Project** einstellen.
+Environment variables** die folgenden Variablen anlegen. Für die Test-APK und
+das interne Play-Test-AAB die Umgebung **preview** wählen. Als Geltungsbereich
+**Project** einstellen.
 
 | Name                          | Wert                                                 | Sichtbarkeit |
 | ----------------------------- | ---------------------------------------------------- | ------------ |
@@ -169,17 +169,18 @@ benötigt für Kartenkacheln eine Internetverbindung.
 
 ## 6. Die weiteren Profile
 
-| Profil               | Zweck                                                             | Befehl                              |
-| -------------------- | ----------------------------------------------------------------- | ----------------------------------- |
-| `development`        | Android-Entwicklungsclient für Änderungen am Code; benötigt Metro | `npm run build:android:development` |
-| `preview`            | Eigenständig laufende Android-Test-APK                            | `npm run build:android:preview`     |
-| `production`         | Signiertes Android App Bundle für Google Play                     | `npm run build:android:production`  |
-| `preview` für iOS    | Test auf registrierten iPhones, benötigt Apple-Entwicklerkonto    | `npm run build:ios:preview`         |
-| `production` für iOS | Build für App Store Connect/TestFlight                            | `npm run build:ios:production`      |
+| Profil               | Zweck                                                             | Befehl                                         |
+| -------------------- | ----------------------------------------------------------------- | ---------------------------------------------- |
+| `development`        | Android-Entwicklungsclient für Änderungen am Code; benötigt Metro | `npm run build:android:development`            |
+| `preview`            | Eigenständig laufende Android-Test-APK                            | `npm run build:android:preview`                |
+| `production`         | Signiertes Android App Bundle für Google Play                     | `npm run build:android:production`             |
+| `play-test`          | Signiertes AAB für die interne Play-Testspur                      | `npm run eas -- build -p android -e play-test` |
+| `preview` für iOS    | Test auf registrierten iPhones, benötigt Apple-Entwicklerkonto    | `npm run build:ios:preview`                    |
+| `production` für iOS | Build für App Store Connect/TestFlight                            | `npm run build:ios:production`                 |
 
-Jedes Profil verwendet die gleichnamige Expo-Umgebung. Vor seiner Verwendung
-die passenden Variablen auch unter **development** beziehungsweise **production**
-anlegen. Es gibt keine automatische Übernahme von Preview-Werten.
+Das Profil `play-test` lädt die Variablen aus **preview** und setzt die
+API-Adresse auf `https://api.laverdaclub.ch`. Die übrigen Profile verwenden die
+gleichnamige Expo-Umgebung.
 
 Beim Entwicklungsclient wird der JavaScript-Code von Metro geladen. Deshalb
 die lokale API-Adresse in deiner lokalen Umgebung setzen und den bestehenden
@@ -213,7 +214,7 @@ automatisch; die sichtbare Version bleibt in `app.json` gepflegt.
 Auf dem Branch `codex/play-store-test` im Ordner `app` diesen Build starten.
 
 ```powershell
-npm.cmd run build:android:production
+npm.cmd run eas -- build -p android -e play-test
 ```
 
 Nach dem Build das AAB auf der EAS-Buildseite herunterladen. In der Google Play
